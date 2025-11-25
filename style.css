@@ -1,0 +1,3511 @@
+:root {
+  --font-body: "Courier New", monospace;
+  --font-headings: "Courier New", monospace;
+  --font-mono: "Courier New", monospace;
+  --font-ui: "Courier New", monospace;
+  --color-button-bg: #3b82f6;
+  --color-button-text: #ffffff;
+  --color-button-hover-bg: #2563eb;
+  --color-button-hover-text: #ffffff;
+  --progress-accent-start: #3b82f6;
+  --progress-accent-end: #2563eb;
+  --progress-accent-text: var(--progress-accent-end);
+  --color-danger-bg: #dc2626;
+  --color-danger-text: #ffffff;
+  --color-danger-hover-bg: #b91c1c;
+  --color-danger-hover-text: #ffffff;
+  --color-label: #ccc;
+
+  /* Spacing scale: 4px base on 16px root */
+  --space-0: 0;
+  --space-1: 0.25rem; /* 4px  */
+  --space-2: 0.5rem;  /* 8px  */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem;    /* 16px */
+  --space-5: 1.5rem;  /* 24px */
+  --space-6: 2rem;    /* 32px */
+  --space-7: 3rem;    /* 48px */
+
+  --gap-tight: var(--space-1);
+  --gap-sm:    var(--space-2);
+  --gap-md:    var(--space-3);
+  --gap-lg:    var(--space-4);
+  --gap-xl:    var(--space-5);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: #f4f7fa;
+  color: #1c1c1c;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+.panel-section details > summary {
+  font-family: var(--font-headings);
+  font-weight: bold;
+}
+
+/* Generic lock style for disabled UI controls */
+.locked {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+}
+
+/* ==============================
+   🧭 Fixed Topbar Layout + Toggle Alignment
+   ============================== */
+
+#titlebar {
+  position: fixed;             /* keep topbar above all panels */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 38px;
+  -webkit-app-region: drag;
+  background: #0f172a;
+  border-bottom: 1px solid #000;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Ensure window-content sits below the titlebar */
+#window-content {
+  margin-top: 38px;            /* push panels below the topbar */
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+
+#panel-toolbar-wrapper {
+  position: absolute;
+  left: 230px;              /* keep clear of sidebar */
+  right: 0;                 /* stretch across main panel only */
+  height: 38px;             /* same as #titlebar */
+  display: flex;
+  justify-content: flex-start;  /* align to left */
+  align-items: center;
+  pointer-events: none;
+  overflow: hidden;          /* prevent bleed into sidebar */
+  z-index: 200;              /* ✅ ensure it layers above main panel */
+}
+
+
+#panel-toolbar {
+  display: flex;
+  justify-content: flex-start;  /* align to left */
+  align-items: center;
+  height: 100%;
+  gap: var(--gap-sm);
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  z-index: 201;              /* ✅ ensures controls float above content */
+}
+
+#panel-toolbar .panel-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin: 0;
+  padding: 0;
+}
+
+/* Flex spacer to push trailing buttons (like Open Editor…) to the right */
+.panel-toolbar-controls .toolbar-flex-spacer {
+  flex: 1 1 auto;
+}
+
+#panel-toolbar .dropdown-wrapper {
+  width: 10rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+#panel-toolbar .chosen-value {
+  height: 26px;
+  line-height: 26px;
+  padding: 0 2rem 0 0.5rem;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#panel-toolbar button {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 0.6rem;
+  font-size: 13px;
+  border-radius: 4px;
+  margin: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+#panel-toolbar button:hover,
+#panel-toolbar button:active {
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+.panel-section .panel-toolbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;  /* left-align presets in panel */
+  position: relative;
+  width: 100%;
+  gap: var(--space-3);          /* 12px between toolbar items */
+  margin: 0 0 var(--space-4);   /* 16px below toolbar */
+  padding: 0;
+  text-align: left;
+}
+
+.panel-section .panel-toolbar-controls .reconnect-toolbar-button {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  right: 0;
+}
+
+.panel-section .panel-toolbar-controls .reconnect-toolbar-button .container {
+  flex: 0 0 auto;
+}
+
+.panel-section .panel-toolbar-controls .dropdown-wrapper {
+  width: 15rem;
+  margin: 0;
+}
+
+.panel-section .panel-toolbar-controls .dropdown-display {
+  align-items: center;
+}
+
+.panel-section .panel-toolbar-controls .chosen-value {
+  height: 2.25rem;
+  line-height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-section .panel-toolbar-controls button {
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+  margin: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+.delete-preset-btn {
+  height: 26px;
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: #1e2a38;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.delete-preset-btn:hover:enabled {
+  background: #dc2626;
+}
+
+.delete-preset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+}
+
+/* Extend divider through entire app (including top bar) */
+.title-divider {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 230px;
+  width: 1px;
+  background: #000;
+  pointer-events: none;
+  z-index: 1000; /* BELOW toggle (2500), ABOVE sidebar */
+}
+
+#clone-lock-wrapper .field-group.horizontal {
+  align-items: center;
+}
+
+/* Sidebar */
+/* (duplicate .sidebar definition removed) */
+
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 1.4rem;
+  margin-bottom: var(--space-4);
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  flex: 1 1 auto;     /* allow shrinking inside sidebar */
+  min-height: 0;      /* prevent overflow forcing scrollbar */
+  overflow: hidden;   /* hide sidebar scroll completely */
+}
+
+/* Sidebar list items are fully styled by the
+   scoped .sidebar ul > li.tab.lae-navbtn rules. */
+
+/* Main Content */
+.main-panel {
+  flex: 1;
+  padding: var(--space-6);
+  overflow-y: auto;
+  box-sizing: border-box;
+  min-height: 0;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 100, 100, 0.3) transparent;
+}
+
+.main-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-panel::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.3);
+  border-radius: 4px;
+}
+
+.main-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.5);
+}
+
+.main-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body.dark-mode .main-panel::-webkit-scrollbar-thumb {
+  background: rgba(200, 200, 200, 0.3);
+}
+
+body.dark-mode .main-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 200, 200, 0.5);
+}
+
+body.dark-mode .main-panel {
+  scrollbar-color: rgba(200, 200, 200, 0.3) transparent;  
+}
+
+/* Expand main-panel to fill available space when open */
+#app.panel-open .main-panel {
+  display: block;
+  width: 100%;
+  flex: 1;
+  margin: 0; /* flush against sidebar */
+  animation: panel-slide-in 0.3s ease-out;
+}
+
+#app.panel-open .main-panel.hidden {
+  display: none;
+}
+
+#app:not(.panel-open) .main-panel {
+  display: none !important;
+}
+
+/* #app:not(.panel-open) .sidebar {
+  width: 100%;
+} */
+
+@keyframes panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Remove default padding when home panel is active */
+body.home-active .main-panel {
+  padding: 0;
+  background-color: #000;
+}
+
+.panel-section {
+  display: block;
+}
+
+/* 🕶️ Hide all contents inside a panel while expanding */
+.panel-section.content-hidden * {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+/* Unified section headings across all panels */
+.panel-section h3,
+.panel-section details > summary {
+  margin-top: var(--space-5);       /* 24px above each heading */
+  font-size: 1.1rem;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: var(--space-1);   /* 4px underline gap */
+  color: #1c1c1c;
+  font-family: var(--font-headings);
+  font-weight: bold;
+  display: flex;
+  list-style: none;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+  text-align: left;
+}
+
+.panel-section details > summary::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: var(--space-2);
+  transition: transform 0.2s ease;
+}
+
+.panel-section details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* 🌐 UNIVERSAL: space under section headers across all panels */
+.panel-section h3 + .field-group,
+.panel-section h3 + .checkbox-row,
+.panel-section h3 + .checkbox-stack,
+.panel-section h3 + .checkbox-grid,
+.panel-section .heading-with-tooltip + .field-group,
+.panel-section .heading-with-tooltip + .checkbox-row,
+.panel-section .heading-with-tooltip + .checkbox-stack,
+.panel-section .heading-with-tooltip + .checkbox-grid,
+.panel-section details > summary + .field-group,
+.panel-section details > summary + .checkbox-row,
+.panel-section details > summary + .checkbox-stack,
+.panel-section details > summary + .checkbox-grid {
+  margin-top: var(--space-4); /* 16px under headings */
+}
+
+/* ✅ Also add spacing when Enhancements uses its flex wrapper */
+.panel-section details > summary + .grouped-enhancements {
+  margin-top: var(--space-4);
+}
+
+.panel-section.hidden {
+  display: none;
+}
+
+#clone-options {
+  display: none;
+}
+
+#ingest.clone-mode #clone-options {
+  display: block;
+}
+
+/* Clone Mode row: filter + checkboxes + tooltip icon on one line */
+#clone-options .field-group.horizontal {
+  align-items: center;
+}
+
+/* Let the filter take most of the space, but leave room for checkboxes + icon */
+#clone-folder-filter {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Keep the checkboxes inline with a bit of breathing room */
+#clone-options .field-group.horizontal > label {
+  margin-left: var(--space-3);
+}
+
+/* Push the Clone tooltip icon to the far right of the row */
+#clone-options .clone-mode-tooltip-container {
+  margin-left: auto;
+}
+
+.section {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.section h2 {
+  margin-top: 0;
+}
+
+.summary-checkbox {
+  font-weight: normal;
+  font-size: 0.9rem;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ===== Text Inputs ===== */
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.65rem;
+  margin: var(--space-2) 0;    /* 0.5rem / 8px */
+  border: 1px solid #ccc;
+  border-radius: 0;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  overflow-y: auto;
+  resize: none;
+}
+
+#transcribe-output-formats {
+  min-height: 140px;
+}
+
+#subtitle-options {
+  display: block;
+}
+
+/* Match Plain Text / Scripted / Final JSON FPS + TC offset inputs to dropdown height */
+#fmt-txt-fps,
+#fmt-txt-tc-start,
+#fmt-script-fps,
+#fmt-script-tc-start,
+#fmt-finaljson-fps,
+#fmt-finaljson-tc-start {
+  height: 2rem;
+  padding: var(--space-2) var(--space-2);
+  box-sizing: border-box;
+}
+
+/* Ensure labels with checkboxes align items horizontally */
+label:has(> input[type="checkbox"]),
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* match existing spacing */
+}
+
+/* Half-Size Checkbox */
+/* Global square checkboxes — exclude .l toggle */
+input[type="checkbox"]:not(.l) {
+  appearance: none;
+  position: relative;
+  width: 25px;
+  height: 25px;
+  border-radius: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 0.25rem;
+  border: 1px solid #94a3b8;
+}
+
+input[type="checkbox"]:not(.l):hover {
+  -webkit-box-shadow: 1px 1px 13px #20232e, -1px -1px 13px #545b78;
+  box-shadow: 1px 1px 13px #20232e, -1px -1px 13px #545b78;
+}
+
+input[type="checkbox"]:not(.l):active {
+  -webkit-box-shadow: 1px 1px 13px #20232e, -1px -1px 33px #545b78;
+  box-shadow: 1px 1px 13px #20232e, -1px -1px 33px #545b78;
+}
+
+input[type="checkbox"]:not(.l)::before,
+input[type="checkbox"]:not(.l)::after {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 2px;
+  background: #888;
+  border-radius: 1px;
+  transition: all 0.3s ease-in-out;
+}
+
+input[type="checkbox"]:not(.l)::before {
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"]:not(.l)::after {
+  transform: rotate(-45deg);
+}
+
+input[type="checkbox"]:not(.l):checked {
+  background: #444;
+}
+
+input[type="checkbox"]:not(.l):checked::before {
+  transform: rotate(50deg) translateX(-1.5px) translateY(4px) scaleX(0.6);
+  background: #3b82f6;
+}
+
+input[type="checkbox"]:not(.l):checked::after {
+  transform: rotate(-50deg) translateX(3px) translateY(1.5px);
+  background: #3b82f6;
+}
+
+/* ===== Buttons ===== */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 50px;
+  margin: 5px;
+  padding: 0 1rem;
+  width: auto;
+  white-space: nowrap;
+  font-family: Consolas, Courier New, monospace;
+  font-size: 16px;
+  color: rgb(161, 161, 161);
+  border: 1px solid #404c5d;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #384452, #1b2632);
+  box-shadow: -1px -5px 15px #41465b, 5px 5px 15px #41465b,
+    inset 5px 5px 10px #1b2632, inset -5px -5px 10px #1b2632;
+  transition: 0.5s;
+}
+
+button:hover {
+  box-shadow: 1px 1px 13px #20232e, -1px -1px 13px #545b78;
+  color: #d6d6d6;
+}
+
+button:active {
+  box-shadow: 1px 1px 13px #20232e, -1px -1px 33px #545b78;
+  color: #d6d6d6;
+  transition: 0.1s;
+}
+
+.btn-danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.btn-danger:hover {
+  background-color: var(--color-danger-hover-bg);
+  color: var(--color-danger-hover-text);
+}
+
+.status-log,
+textarea {
+  background-color: #ffffff;
+  padding: var(--space-4);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  margin-top: var(--space-4);
+  white-space: pre-wrap;
+  width: 100%;
+  box-sizing: border-box;
+  flex-basis: 100%;
+  line-height: 1.3;
+  resize: none;
+  max-height: calc(1.3em * 15);
+  overflow-y: auto; /* ✅ only show when needed */
+}
+
+/* ✅ Hide scrollbars ONLY when empty */
+.status-log:empty,
+textarea:placeholder-shown:empty {
+  overflow-y: hidden !important;
+}
+
+/* ✅ Always show scrollbar when content exceeds visible area */
+.status-log:not(:empty),
+textarea:not(:empty) {
+  overflow-y: auto !important;
+}
+
+/* 🔧 Ensure scrollbars work in read-only textareas like Adobe Automate panel */
+#adobe-source-path,
+#job-preview-box,
+#ingest-job-preview-box {
+  overflow-y: auto !important;
+  max-height: none;             /* ✅ allow full expansion */
+  scrollbar-gutter: stable;
+  min-height: 3rem;             /* matches Adobe Automate */
+  transition: height 0.15s ease;
+}
+
+/* ✅ Consistent slim scrollbar style for both text areas */
+#adobe-source-path::-webkit-scrollbar,
+#job-preview-box::-webkit-scrollbar,
+#ingest-job-preview-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+#adobe-source-path::-webkit-scrollbar-thumb,
+#job-preview-box::-webkit-scrollbar-thumb,
+#ingest-job-preview-box::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.3);
+  border-radius: 4px;
+}
+
+#adobe-source-path::-webkit-scrollbar-thumb:hover,
+#job-preview-box::-webkit-scrollbar-thumb:hover,
+#ingest-job-preview-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.5);
+}
+
+/* Dark mode variant */
+body.dark-mode #adobe-source-path::-webkit-scrollbar-thumb,
+body.dark-mode #job-preview-box::-webkit-scrollbar-thumb,
+body.dark-mode #ingest-job-preview-box::-webkit-scrollbar-thumb {
+  background: rgba(200, 200, 200, 0.3);
+}
+
+body.dark-mode #adobe-source-path::-webkit-scrollbar-thumb:hover,
+body.dark-mode #job-preview-box::-webkit-scrollbar-thumb:hover,
+body.dark-mode #ingest-job-preview-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 200, 200, 0.5);
+}
+
+#adobe-source-path::-webkit-scrollbar-track,
+#job-preview-box::-webkit-scrollbar-track,
+#ingest-job-preview-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* === DARK MODE VARIANT === */
+body.dark-mode .status-log,
+body.dark-mode textarea {
+  background-color: #0f172a;
+  color: #d1d5db;
+  border: 1px solid #374151;
+}
+
+body.dark-mode .status-log::-webkit-scrollbar-thumb,
+body.dark-mode textarea::-webkit-scrollbar-thumb {
+  background: rgba(200, 200, 200, 0.3);
+}
+
+body.dark-mode .status-log::-webkit-scrollbar-thumb:hover,
+body.dark-mode textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 200, 200, 0.5);
+}
+
+body.dark-mode .status-log::-webkit-scrollbar-track,
+body.dark-mode textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.status-log > div {
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+#sample-preview {
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 13px;
+  padding: 0.5em;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  color: #000;
+}
+
+pre,
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+
+/* Field group layout for checkboxes and controls */
+.field-group {
+  margin-bottom: 0;             /* bottom spacing handled by panel rules */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);           /* 8px between items in the group */
+}
+
+.field-group.vertical {
+  flex-direction: column;
+  align-items: flex-start;      /* left-align vertical stacks */
+}
+
+.field-group label {
+  margin: 0;
+  font-size: 0.95rem;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+#nle-utilities .field-group input[readonly] {
+  margin-top: 0;
+}
+
+#project-organizer {
+  min-height: 400px;
+  display: block;
+  padding-bottom: 2rem;
+}
+
+/* Ensure project organizer respects the hidden class */
+#project-organizer.hidden {
+  display: none;
+}
+
+.spaced-top {
+  margin-top: var(--space-4);      /* 1rem */
+}
+
+.spaced-bottom {
+  margin-bottom: var(--space-4);   /* 1rem */
+}
+
+/* Utility: prevent wrapping where text must stay on one line */
+.nowrap {
+  white-space: nowrap;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* ✅ universal vertical spacing below single-line rows */
+  margin-bottom: var(--space-3);   /* 0.75rem */
+}
+
+.fmt-txt-checkbox-row {
+  /* Inherits 3-column layout and spacing from .checkbox-grid */
+}
+
+/* ================================
+   ✅ UNIVERSAL CHECKBOX GRID LAYOUT
+   ================================ */
+/* One grid for all panels */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  justify-items: start;
+  /* row gap / column gap */
+  gap: var(--space-3) var(--space-5);   /* 12px rows, 24px columns */
+  margin-bottom: var(--space-3);        /* 12px below */
+}
+
+/* Labels that contain a dropdown stack label+control neatly */
+.checkbox-grid label:has(.dropdown-wrapper) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-tight);
+  width: 100%;
+}
+
+/* Plain checkbox labels stay inline */
+.checkbox-grid label:not(:has(.dropdown-wrapper)) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+}
+
+/* If a grid row has only two labels, put the second one under the middle column */
+.checkbox-grid label:nth-child(2):last-child {
+  grid-column: 2;
+}
+
+
+.checkbox-row .info-icon {
+  margin-left: auto;
+}
+
+.checkbox-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Stacked checkbox list for multi-line option sets */
+.checkbox-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Align each checkbox + label row inside the stack */
+.checkbox-stack label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-icon {
+  margin-left: 6px;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-block;
+  position: relative;
+}
+
+.info-icon .tooltip {
+  visibility: hidden;
+  width: 260px;
+  background-color: #000;
+  color: #fff;
+  text-align: left;
+  padding: 8px;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 9999;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  font-size: 13px;
+}
+
+.info-icon:hover .tooltip,
+.info-icon:focus .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+#ingest-lock-wrapper input:disabled,
+#ingest-lock-wrapper select:disabled,
+#ingest-lock-wrapper textarea:disabled,
+#ingest-lock-wrapper button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+#clone-lock-wrapper input:disabled,
+#clone-lock-wrapper select:disabled,
+#clone-lock-wrapper textarea:disabled,
+#clone-lock-wrapper button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+#clone-lock-wrapper .field-group {
+  align-items: flex-start;
+}
+
+#clone-lock-wrapper .checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+#clone-lock-wrapper .checkbox-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#transcode input:disabled,
+#transcode select:disabled,
+#transcode textarea:disabled,
+#transcode button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#clone-lock-wrapper.locked input,
+#clone-lock-wrapper.locked select,
+#clone-lock-wrapper.locked textarea,
+#clone-lock-wrapper.locked button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.video-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
+  gap: var(--space-4) var(--space-5);  /* 16px rows, 24px columns */
+  margin-top: var(--space-4);          /* 16px above the grid */
+}
+
+/* Optional helper: bottom-align controls without changing global spacing */
+.video-grid-3col.align-end {
+  align-items: flex-end;
+}
+.video-grid-4col {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: var(--space-4) var(--space-5);  /* 16px rows, 24px columns */
+  margin-top: var(--space-4);          /* 16px above the grid */
+}
+.video-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: var(--space-3) var(--space-5);  /* 12px rows, 24px columns */
+  margin-top: var(--space-3);          /* 12px above */
+}
+
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-item label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: var(--space-1);  /* 4px under labels */
+  color: var(--color-label);
+}
+
+.video-settings-info {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+#clone-lock-wrapper.locked {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+#clone-button-row {
+  display: flex;
+  gap: var(--gap-sm);
+  align-items: center;
+}
+
+#clone-lock-wrapper-buttons {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+/* ✅ Override Cancel button lock */
+#clone-lock-wrapper.locked #clone-cancel {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* ✅ Adobe Automate — Keep visible elements bright and active during job lock */
+
+#adobe-lock-wrapper.locked,
+#adobe-lock-controls.locked {
+  opacity: 1; /* prevent parent fade that dims everything */
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Fade only form elements and nonessential buttons */
+#adobe-lock-wrapper.locked input,
+#adobe-lock-wrapper.locked select,
+#adobe-lock-wrapper.locked textarea,
+#adobe-lock-wrapper.locked button:not(#cancel-adobe-utilities) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ✅ Keep Cancel, progress, and hamster bright + interactive */
+#adobe-lock-wrapper.locked #cancel-adobe-utilities,
+#adobe-lock-controls.locked #cancel-adobe-utilities,
+#adobe-lock-wrapper.locked #loader-inline,
+#adobe-lock-wrapper.locked #adobe-progress,
+#adobe-lock-wrapper.locked #cep-job-status,
+#adobe-lock-controls.locked #loader-inline,
+#adobe-lock-controls.locked #adobe-progress,
+#adobe-lock-controls.locked #cep-job-status {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/* Ingest panel lock styles */
+#ingest-lock-wrapper.locked input,
+#ingest-lock-wrapper.locked select,
+#ingest-lock-wrapper.locked textarea,
+#ingest-lock-wrapper.locked button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#ingest-lock-wrapper.locked {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+#ingest-lock-wrapper.locked #cancel-ingest {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Ensure the Cancel button remains clickable when the controls wrapper is locked
+   during an ingest job. The generic `.locked` rule disables pointer events on
+   parent elements, so we override it here just like we do for the lock wrapper
+   above. This mirrors behavior for transcode and clone panels. */
+
+#ingest-lock-controls.locked #cancel-ingest {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Transcode panel lock styles */
+#transcode-lock-wrapper.locked input,
+#transcode-lock-wrapper.locked select,
+#transcode-lock-wrapper.locked textarea,
+#transcode-lock-wrapper.locked button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#transcode-lock-wrapper.locked {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+#transcode-lock-wrapper.locked #cancelTranscode {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: pointer;
+}
+
+#transcode-lock-wrapper.locked #transcode-loader-inline,
+#transcode-lock-wrapper.locked #transcode-progress,
+#transcode-lock-wrapper.locked #transcode-job-status {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/* Transcribe panel lock styles */
+#transcribe-lock-wrapper.locked input,
+#transcribe-lock-wrapper.locked select,
+#transcribe-lock-wrapper.locked textarea,
+#transcribe-lock-wrapper.locked button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#transcribe-lock-wrapper.locked {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+#transcribe-lock-wrapper.locked #cancel-transcribe {
+  pointer-events: auto;
+  opacity: 1;
+  cursor: pointer;
+}
+
+#transcribe-lock-wrapper.locked #transcribe-loader-inline,
+#transcribe-lock-wrapper.locked #transcribe-job-status {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+
+/* 🔧 Ingest-specific layout fixes */
+#ingest-lock-wrapper .vertical-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+#ingest-lock-wrapper .single-line {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#ingest-lock-wrapper .vertical-stack label {
+  text-align: left;
+  width: 100%;
+}
+
+#transcode .field-group label {
+  width: 100%;
+  font-weight: 500;
+}
+
+#transcode .field-group.horizontal label {
+  width: auto;
+  margin-right: var(--space-2);
+  white-space: nowrap;
+}
+
+#transcode select,
+#transcode input[type="text"],
+#transcode input[type="number"],
+#transcode textarea {
+  max-width: 100%;
+}
+
+.sidebar {
+  width: 230px;
+  background-color: #0f172a;
+  color: white;
+  padding: 1rem;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  height: 100%;       /* fill window-content height */
+  max-height: 100vh;  /* never exceed screen height */
+
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  text-transform: uppercase;
+
+  overflow: hidden;   /* ✅ stop scrollbars */
+}
+
+/* 📂 Draggable folder list */
+.draggable-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  width: 50%;
+}
+
+.draggable-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  margin-bottom: 4px;
+  cursor: move;
+  /* eslint-disable-next-line css/use-baseline */
+  user-select: none;
+  width: 50%;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Project Organizer — mirror Adobe Automate compact/right layout
+   ────────────────────────────────────────────────────────────── */
+/* Right-align each organizer row like Adobe bins, compact sizing */
+#folder-list .draggable-item {
+  margin-left: auto;     /* push row to the RIGHT */
+  width: auto;           /* compact width */
+  min-width: 120px;      /* don't collapse too tiny */
+  padding: 2px 6px;      /* tight rhythm */
+  margin-bottom: 2px;    /* tight stack */
+  min-height: 20px;      /* small but clickable */
+}
+
+/* Tighten the inner row visuals like Adobe */
+#folder-list .folder-row {
+  display: flex;
+  width: 100%;
+  padding: 0;
+  line-height: 1.2;
+  align-items: center;
+  justify-content: flex-start; /* label left, actions forced right */
+}
+
+/* Keep + / – hard-right inside the full row */
+#folder-list .folder-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+/* Paperclip inside actions, before buttons */
+#folder-list .folder-actions .attachment-indicator {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  /* small, consistent spacing before the + / – buttons */
+  margin-right: 4px;
+  /* prevent accidental text selection wiggle on drag */
+  user-select: none;
+}
+
+/* (Optional) If any earlier overrides still exist, neutralize them */
+#folder-list .folder-row.subfolder { padding-left: initial; }
+
+/* Compact Adobe Automate bins */
+#adobe-bin-list .draggable-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-left: auto;   /* shift boxes inward from left */
+  width: auto;         /* let width shrink with depth */
+  min-width: 120px;    /* prevents boxes from collapsing too small */
+  padding: 2px 6px;       /* reduce vertical padding */
+  margin-bottom: 2px;     /* less gap between rows */
+  min-height: 20px;       /* enforce a smaller row height */
+}
+
+#adobe-bin-list .folder-row {
+  padding: 0;             /* remove extra space */
+  line-height: 1.2;       /* tighten line height */
+  align-items: center;    /* keep text aligned */
+}
+
+#adobe-bin-list .remove-files-btn {
+  margin-left: auto;
+  font-size: 11px;        /* smaller button */
+  padding: 0 4px;
+  height: 18px;           /* compact button height */
+}
+
+/* Match unassigned files list for consistency */
+#source-file-list .draggable-item {
+  padding: 2px 6px;
+  margin-bottom: 2px;
+  min-height: 20px;
+  width: 100%;
+}
+
+.draggable-item.selected {
+  background-color: #e0f2ff;
+}
+
+.draggable-item.dragging {
+  opacity: 0.5;
+}
+
+.attachment-indicator {
+  margin-left: 4px;
+}
+
+.add-files-btn {
+  margin-left: auto;
+  padding: 0 6px;
+  font-size: 14px;
+}
+
+.remove-files-btn {
+  margin-left: 4px;
+  padding: 0 6px;
+  font-size: 14px;
+}
+
+#folder-list li {
+  list-style: none;
+  margin: 4px 0;
+}
+
+#folder-list .folder-row span {
+  text-align: left;
+}
+
+.field-group.vertical-stack label {
+  width: 100%;
+  font-weight: 400;
+}
+
+/* Optional cleanup: legacy grouped layout no longer flexed */
+.grouped-enhancements {
+  display: block;
+  gap: 0;
+}
+
+.enhancement-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.enhancement-group strong {
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+/* 🌙 Dark Mode: make group headers legible */
+body.dark-mode .enhancement-group strong {
+  color: #f9fafb;
+}
+
+/* Tidy: small offset between group title and its grid */
+.enhancement-group .checkbox-grid {
+  margin-top: 0.25rem;
+}
+
+/* Enhancements: headings inside the shared checkbox grid */
+.enhancements-grid .enhancement-heading {
+  grid-column: 1 / -1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  margin-bottom: 0.1rem;
+  color: #1f2937;
+}
+
+/* Dark mode contrast for Enhancement headings */
+body.dark-mode .enhancements-grid .enhancement-heading {
+  color: #f9fafb;
+}
+
+/* Toast notification for Preferences */
+.toast {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #333;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  z-index: 1000;
+}
+
+.toast.show {
+  display: block;
+}
+
+
+.progress-line {
+  font-family: var(--font-mono);
+  margin: 4px 0;
+}
+
+/* ===== Folder Tree Enhancements ===== */
+.folder-tree {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  user-select: none;
+}
+
+#clone-folder-tree {
+  min-height: calc(1.3em * 12);
+  resize: vertical;
+  max-height: none;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 2px 0;
+}
+
+.tree-toggle {
+  width: 1rem;
+  text-align: center;
+  margin-right: 4px;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.tree-icon {
+  margin: 0 4px;
+  font-size: 1rem;
+}
+
+.tree-label {
+  flex: 1;
+  cursor: default;
+}
+
+/* Folder count badge */
+.tree-row .tree-count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+body.dark-mode .tree-row .tree-count {
+  opacity: 0.85;
+}
+
+.tree-children {
+  margin-left: 20px;
+  border-left: 1px dotted #ccc;
+  padding-left: 6px;
+  display: none;
+}
+
+.tree-children.open {
+  display: block;
+}
+
+/* Partial (some children selected) — use red color instead of a half-check */
+#ingest .folder-tree input[type="checkbox"]:not(.l).partial {
+  background: #3b0d0d; /* dark red background */
+}
+
+/* ✅ Clean red/blue folder logic visuals */
+
+/* Remove red X and replace with red checkmark styling */
+.folder-tree input[type="checkbox"].partial::before,
+.folder-tree input[type="checkbox"].partial::after {
+  transform: rotate(45deg);
+  background: #e53935;
+  width: 12px;
+  height: 2px;
+  content: "";
+  position: absolute;
+}
+
+/* Dark red background for red folders */
+.folder-tree input[type="checkbox"].partial {
+  background: #3b0d0d;
+  box-shadow: inset 1px 1px 2px #220, inset -1px -1px 2px #400;
+}
+
+.field-group.horizontal {
+  flex-direction: row;
+  align-items: center;
+}
+
+select.compact,
+input.compact {
+  width: auto;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+#transcode select.compact,
+#transcode input.compact {
+  min-width: 140px;
+  max-width: 220px;
+}
+
+#transcode #crf,
+#transcode #audioDelay {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 2rem;
+  margin: var(--space-2) 0;
+  padding: var(--space-2);
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  background: #fafcfd;
+  color: #1c1c1c;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#transcode #crf:hover,
+#transcode #crf:focus,
+#transcode #audioDelay:hover,
+#transcode #audioDelay:focus {
+  background: #667281;
+  color: #f9fafb;
+  border-color: #3b82f6;
+  outline: none;
+}
+
+.field-group.vertical-stack strong {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+label[for="root-folder-name"] {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.field-group.project-name {
+  margin-top: 1.2rem;
+}
+
+/* 🎨 Theme dropdown styling */
+#preferences select#theme-select {
+  font-weight: bold;
+  background-color: #e0f2ff;
+  border: 1px solid #60a5fa;
+}
+
+/* Dropdown row shared across panels */
+.field-group.horizontal .dropdown-wrapper {
+  flex: 1;
+  min-width: 160px;
+  margin: 0;
+}
+
+#adobe-proxy-dest-row {
+  width: 100%;
+  flex: 1 1 100%;
+  margin-top: 1rem;
+}
+
+#adobe-proxy-preset-wrapper {
+  gap: var(--gap-sm);
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#adobe-proxy-preset-controls {
+  margin-top: 0.5rem;
+}
+
+
+/* ✅ Normalized spacing for Proxy Settings rows */
+.proxy-settings-wrapper > .field-group,
+.proxy-settings-wrapper > .dropdown-wrapper {
+  margin-bottom: 1rem; /* consistent vertical spacing */
+}
+
+.proxy-settings-wrapper > :last-child {
+  margin-bottom: 0; /* prevent extra gap after final row */
+}
+
+/* 📊 File Status Table */
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+.status-table th,
+.status-table td {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: center;
+}
+.status-table td.file-name {
+  text-align: left;
+}
+.status-table td.output-name {
+  text-align: left;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.form-section {
+  margin-top: 2rem;
+  border-top: 1px solid #ccc;
+  padding-top: 1rem;
+}
+.dependent-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.panel-section h3:empty {
+  display: none;
+  border-bottom: none;
+  margin: 0;
+  padding: 0;
+}
+
+select.compact {
+  min-width: 160px;
+  max-width: 220px;
+  font-size: 0.95rem;
+}
+
+select.compact {
+  padding: 10px 16px; /* Match button */
+  height: 40px;        /* Or same as buttons */
+  line-height: 1.2;
+  font-size: 0.95rem;
+  font-family: var(--font-ui);
+  vertical-align: middle;
+}
+
+
+.preferences-footer {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.preferences-footer .report-bug-link {
+  margin-left: auto;
+  color: var(--color-button-bg);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.preferences-footer .report-bug-link:hover,
+.preferences-footer .report-bug-link:focus {
+  color: var(--color-button-hover-bg);
+}
+
+.sidebar-logo {
+  margin-top: auto;
+  padding-top: var(--space-4);          /* 1rem */
+  text-align: center;
+}
+
+.sidebar-logo a {
+  display: flex;
+}
+
+.sidebar-logo img {
+  max-width: 200px;
+  height: auto;
+  opacity: 0.9;
+}
+
+/* Tooltip for Proxy Settings */
+/* From Uiverse.io by Cksunandh */
+/* Make Proxy Settings headings match other section titles */
+.heading-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+
+  /* match h3 styles */
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.25rem;
+  margin-top: var(--space-6);           /* 1.5rem – section break */
+  font-size: 1.1rem;
+  font-family: var(--font-headings);
+  font-weight: bold;
+  color: #1c1c1c;
+  width: 100%; /* ensures full underline */
+}
+
+/* Let collapsable Verification summaries use the same heading layout */
+.panel-section details > summary.heading-with-tooltip .summary-label {
+  flex: 1;              /* push the tooltip icon to the right */
+}
+
+.heading-with-tooltip h3 {
+  border-bottom: none; /* prevent double line from global h3 rule */
+  margin: 0;            /* remove duplicate spacing */
+  flex: 1;              /* allows heading text to expand full width */
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 0 0.5rem;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.icon svg {
+  transition: transform 0.5s ease-in-out;
+}
+
+.icon:hover svg {
+  transform: rotate(360deg) scale(1.2);
+}
+
+.tooltip {
+  visibility: hidden;
+  width: max-content;
+  max-width: 400px;
+  background-color: #000;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-weight: normal;
+  text-align: left;
+  border-radius: 5px;
+  padding: 20px;
+  position: absolute;
+  z-index: 9999;
+  top: 50%;
+  bottom: auto;
+  right: calc(100% + 10px);
+  left: auto;
+  opacity: 0;
+  transform: translateY(-50%) translateX(-10px);
+  transition: opacity 0.5s, transform 0.5s;
+  white-space: pre-line; /* allow \n in JS template strings */
+  overflow-wrap: break-word;
+}
+
+/* 🔧 Make Drive Tests tooltip 50% wider */
+#speedtest-info-tooltip.tooltip {
+  max-width: 600px !important;
+  width: 600px !important;
+}
+
+/* Make ALL top panel overview tooltips share the same wide width */
+#automation-requirements-tooltip.tooltip,
+#ingest-overview-tooltip.tooltip,
+#transcode-overview-tooltip.tooltip,
+#project-organizer-overview-tooltip.tooltip,
+#nle-overview-tooltip.tooltip,
+#preferences-overview-tooltip.tooltip,
+#transcribe-overview-tooltip.tooltip,
+#log-viewer-overview-tooltip.tooltip,
+#speed-test-overview-tooltip.tooltip {
+  max-width: 600px;
+  width: 600px;
+  white-space: normal;
+}
+
+/* Center icon + tooltip at top of Log Viewer + Speed Test panels */
+#log-viewer .panel-toolbar-controls,
+#speed-test .panel-toolbar-controls {
+  position: relative; /* anchor for absolute centering */
+  overflow: visible;  /* let tooltips escape the toolbar row */
+  z-index: 5;        /* keep tooltip containers above sibling content */
+}
+
+/* Center the tooltip container (icon + box) over the panel */
+#log-viewer .panel-toolbar-controls .tooltip-container,
+#speed-test .panel-toolbar-controls .tooltip-container {
+  position: absolute;   /* take it out of the flex flow */
+  left: 50%;
+  transform: translateX(-50%); /* dead center in the panel width */
+  z-index: 6;          /* ensure hover area sits above panel content */
+  top: 0;              /* align with the top of the toolbar */
+}
+
+.panel-section .panel-toolbar-controls h2 {
+  margin: 0;
+}
+
+/* === Enhanced Tooltip Content Styling === */
+.tooltip-content {
+  font-family: "Courier New", monospace;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.tooltip-header {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #3b82f6; /* Lead AE blue */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.5);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
+
+  /* ✅ Center header text cleanly */
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
+/* === Enhanced Proxy Tooltip Layout === */
+.tooltip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.tooltip-subtitle {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tooltip-path {
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  color: #d1d5db;
+  word-break: break-all;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+body.dark-mode .tooltip-path {
+  color: #111;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.tooltip-section:last-child {
+  margin-bottom: 0;
+}
+
+.tooltip-list {
+  list-style-type: disc;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+  line-height: 1.4;
+}
+
+.tooltip-list li {
+  margin-bottom: 0.3rem;
+}
+
+/* Dark Mode refinement */
+body.dark-mode .tooltip-header {
+  color: #60a5fa;
+  border-bottom-color: rgba(96, 165, 250, 0.4);
+}
+
+body.dark-mode .tooltip-list {
+  color: #000; /* tooltip bg is white in dark mode */
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent transparent #000;
+}
+
+.tooltip-container:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.tooltip-bottom {
+  top: calc(100% + 10px);
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.tooltip-bottom::after {
+  top: auto;
+  bottom: 100%;
+  left:50%;
+  margin-left: -5px;
+  margin-top: 0;
+  border-color: transparent transparent #000 transparent;
+}
+
+.tooltip-container:hover .tooltip-bottom {
+  transform: translateX(-50%);
+}
+
+/* Log Viewer: place header copy at top-left while keeping icon centered */
+#log-viewer .panel-toolbar-controls.log-viewer-toolbar {
+  align-items: flex-start;
+  position: relative;
+}
+
+.log-viewer-header-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.1;
+  font-family: var(--font-body);
+  white-space: normal;
+  text-align: left;
+}
+
+/* 🔧 Drive Tests: keep default tooltip geometry, just move icon+tooltip down slightly */
+#speed-test .heading-with-tooltip .tooltip-container {
+  margin-top: 6px; /* nudge this up/down a couple px if needed */
+}
+
+/* Smaller buttons for folder-selection panel in Project Organizer */
+#project-organizer #folder-selection button,
+#project-organizer .add-files-btn,
+#project-organizer .remove-files-btn {
+  width: 30px;
+  height: 12.5px;
+  font-size: 12px;
+  margin: 2px;
+}
+
+/* ===== Dropdowns ===== */
+.dropdown-wrapper {
+  position: relative;
+  width: 100%;
+  margin: var(--space-2) 0;
+  height: 2rem;
+  box-sizing: border-box;
+}
+
+.dropdown-wrapper.full-width {
+  width: 100%;
+}
+
+.dropdown-display {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.chosen-value {
+  width: 100%;
+  height: 2rem;
+  padding: 0.5rem 2rem 0.5rem 0.5rem;
+  font-family: "Courier New", monospace;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  background: #fafcfd;
+  color: #1c1c1c;
+  text-align: center;
+}
+
+.chosen-value:hover,
+.chosen-value:focus,
+.chosen-value.open {
+  background: #667281;
+  color: #f9fafb;
+  border-color: #3b82f6;
+}
+
+.value-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #fafcfd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  z-index: 9999;
+  border: none;               /* 🔧 No border when closed */
+}
+
+/* Only show border when dropdown is open */
+.value-list.open {
+  border: 1px solid #ccc;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.value-list li {
+  padding: var(--space-2);
+  font-size: 1rem;
+  color: #000;
+}
+
+.value-list li:hover {
+  background: #667281;
+  color: #f9fafb;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+  color: #1c1c1c;
+}
+
+.dropdown-wrapper.open .dropdown-arrow,
+.chosen-value.open ~ .dropdown-arrow {
+  transform: translateY(-50%) rotate(225deg);
+}
+
+/* Base progress element */
+progress[value] {
+  width: 12.5em;
+  height: 0.25em;
+  border: none;
+  border-radius: 0.125em;
+  background: transparent; /* invisible by default */
+  transition: background 0.3s ease-in-out;
+}
+
+/* === LIGHT MODE === */
+progress[value]::-webkit-progress-bar {
+  border-radius: 0.125em;
+  background: #f4f7fa; /* matches light panel background */
+}
+
+progress[value]::-webkit-progress-value {
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--progress-accent-start),
+    var(--progress-accent-end)
+  ); /* Lead AE blue */
+  transition: width 0.3s ease-in-out, background 0.3s ease-in-out;
+}
+
+progress[value]::-moz-progress-bar {
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--progress-accent-start),
+    var(--progress-accent-end)
+  );
+}
+
+/* === DARK MODE === */
+body.dark-mode progress[value] {
+  background: transparent;
+}
+
+body.dark-mode progress[value]::-webkit-progress-bar {
+  background: #0f172a; /* blends with dark panel background */
+}
+
+body.dark-mode progress[value]::-webkit-progress-value {
+  background: linear-gradient(
+    90deg,
+    var(--progress-accent-start),
+    var(--progress-accent-end)
+  ); /* vivid blue when active */
+}
+
+body.dark-mode progress[value]::-moz-progress-bar {
+  background: linear-gradient(
+    90deg,
+    var(--progress-accent-start),
+    var(--progress-accent-end)
+  );
+}
+
+/* Optional fade effect for percentage text */
+output:not(:empty) {
+  padding-bottom: 0.25em;
+  transition: opacity 0.3s ease-in-out;
+}
+
+output:not(:empty)::after {
+  content: '%';
+}
+
+/* === Reconnect Button (custom round design) === */
+.container {
+  width: 3em;
+  height: 3em;
+  position: relative;
+}
+
+.container input {
+  display: none;
+}
+
+.button {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #090909;
+  background-color: transparent;
+  background-image: linear-gradient(145deg, #171717, #444245);
+  box-sizing: border-box;
+  box-shadow: inset 2px 2px 0 #7d7c7e, inset -2px -2px 0px #1c1c1c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+label.button[for="reconnect-checkbox"][data-state="connected"] {
+  cursor: not-allowed;
+}
+
+.button .icon {
+  width: 25px;
+  height: 25px;
+  display: inline-block;
+}
+
+.button .icon svg {
+  height: 100%;
+  width: 100%;
+  fill: #a5a5a5;
+}
+
+#reconnect-checkbox:checked + .button {
+  box-shadow: inset -1px -1px 0 #5e5e5e, inset 1px 1px 0 #1c1c1c;
+  border: 2px solid rgb(125, 115, 243);
+  animation: animeBorder 0.3s linear alternate-reverse infinite;
+}
+
+#reconnect-checkbox:checked + .button .icon svg {
+  fill: rgb(125, 115, 243);
+  animation: animeFill 0.3s linear alternate-reverse infinite;
+}
+
+/* ✅ Always hide the reconnect checkbox — prevents ghost checkbox above button */
+#reconnect-checkbox {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+@keyframes animeFill {
+  to {
+    fill: rgb(125, 115, 243);
+  }
+}
+
+@keyframes animeBorder {
+  to {
+    border-color: rgb(125, 115, 243);
+  }
+}
+
+/* ==============================================
+   🖱️ Universal Pointer Cursor for Clickable Items
+   ============================================== */
+
+button,
+label,
+a[href],
+.tab,
+.sidebar li,
+.dropdown-wrapper,
+.dropdown-arrow,
+.value-list li,
+.reconnect-toolbar-button label,
+.tooltip-container .icon,
+summary,
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+/* 🌙 Dark Mode Overrides */
+body.dark-mode {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .section {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+body.dark-mode .sidebar {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .sidebar li:hover,
+body.dark-mode .sidebar li.active {
+  background-color: #2563eb;
+  color: #fff;
+  border-radius: 6px;
+}
+
+body.dark-mode button {
+  background: linear-gradient(145deg, #1e293b, #020617);
+  color: #f9fafb;
+}
+
+body.dark-mode .btn-danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+body.dark-mode .btn-danger:hover {
+  background-color: var(--color-danger-hover-bg);
+  color: var(--color-danger-hover-text);
+}
+
+/* 🎛️ CRF Input — Dark Mode Styling */
+body.dark-mode #transcode #crf,
+body.dark-mode #transcode #audioDelay {
+  background: #111827;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+body.dark-mode #transcode #crf:hover,
+body.dark-mode #transcode #crf:focus,
+body.dark-mode #transcode #audioDelay:hover,
+body.dark-mode #transcode #audioDelay:focus {
+  background: #374151;
+  border-color: #60a5fa;
+  color: #f9fafb;
+}
+
+body.dark-mode input,
+body.dark-mode select {
+  background-color: #111827;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+body.dark-mode button:disabled,
+body.dark-mode input:disabled,
+body.dark-mode select:disabled,
+body.dark-mode textarea:disabled {
+  background-color: #1f2937;
+  color: #94a3b8;
+  border-color: #1f2937;
+  opacity: 0.45;
+}
+
+body.dark-mode .locked input,
+body.dark-mode .locked select,
+body.dark-mode .locked textarea,
+body.dark-mode .locked button {
+  background-color: #1f2937;
+  color: #94a3b8;
+  border-color: #1f2937;
+  opacity: 0.45;
+}
+
+body.dark-mode label {
+  color: #f9fafb;
+}
+
+body.dark-mode .tooltip {
+  background-color: #fff;
+  color: #000;
+}
+
+body.dark-mode .tooltip::after {
+  border-color: transparent transparent transparent #fff;
+}
+
+body.dark-mode .tooltip-bottom::after {
+  border-color: transparent transparent #fff transparent;
+}
+
+body.dark-mode .panel-section h3,
+body.dark-mode .panel-section details > summary {
+  color: #f9fafb;
+  border-bottom: 1px solid #4b5563;
+  list-style: none;
+}
+
+body.dark-mode .heading-with-tooltip {
+  color: #f9fafb;
+  border-bottom: 1px solid #4b5563;
+}
+
+body.dark-mode .heading-with-tooltip h3 {
+  border-bottom: none;
+}
+
+body.dark-mode .tree-toggle {
+  color: #bbb;
+}
+
+body.dark-mode .tree-children {
+  border-left: 1px dotted #444;
+}
+
+body.dark-mode .draggable-item {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #374151;
+}
+
+body.dark-mode .draggable-item.selected {
+  background-color: #374151;
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+body.dark-mode .folder-tree {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark-mode .status-table {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+body.dark-mode .status-table th,
+body.dark-mode .status-table td {
+  border-color: #374151;
+}
+
+body.dark-mode #transcode-summary-fill {
+  background-color: #10b981;
+}
+
+body.dark-mode #preferences select#theme-select {
+  background-color: #1e293b;
+  border-color: #3b82f6;
+}
+
+body.dark-mode .chosen-value {
+  background: #111827;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+body.dark-mode .chosen-value:hover,
+body.dark-mode .chosen-value:focus,
+body.dark-mode .chosen-value.open {
+  background: #667281;
+  border-color: #60a5fa;
+  color: #f9fafb;
+}
+
+body.dark-mode .value-list {
+  background: #1e293b;
+  border-color: #374151;
+}
+
+body.dark-mode .value-list li {
+  color: #f9fafb;
+}
+
+body.dark-mode .value-list li:hover {
+  background: #667281;
+  color: #f9fafb;
+}
+
+body.dark-mode .dropdown-arrow {
+  color: #f9fafb;
+}
+
+/* ==============================
+   🌙 LIGHT / DARK MODE TOGGLE (Uiverse Original)
+   ============================== */
+
+.format-options { margin-top: 1rem; }
+.format-options .chosen-value { text-align: left; }
+
+.theme-toggle-left {
+  position: fixed;
+  top: 19px; /* centered within 38px titlebar */
+  left: calc(230px + 14px); /* sidebar width + spacing */
+  transform: translateY(-50%);
+  z-index: 2500;
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+}
+
+/* --- Uiverse toggle base --- */
+.l {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 0.75em;
+  box-shadow: 0.125em 0.125em 0 0.125em rgba(0, 0, 0, 0.3) inset;
+  color: #fdea7b;
+  margin: 0;
+  padding: 0.15em;
+  width: 3em;
+  height: 1.5em;
+  cursor: pointer;
+  transition:
+    background-color 0.1s 0.3s ease-out,
+    box-shadow 0.1s 0.3s ease-out;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+}
+
+.l:before,
+.l:after {
+  content: "";
+  display: block;
+}
+
+/* Knob */
+.l:before {
+  background-color: #d7d7d7;
+  border-radius: 50%;
+  width: 1.2em;
+  height: 1.2em;
+  transition:
+    background-color 0.1s 0.3s ease-out,
+    transform 0.3s ease-out;
+  z-index: 1;
+}
+
+/* Decorative pattern */
+.l:after {
+  background:
+    linear-gradient(transparent 50%, rgba(0, 0, 0, 0.15) 0) 0 50% / 50% 100%,
+    repeating-linear-gradient(90deg, #bbb 0, #bbb, #bbb 20%, #999 20%, #999 40%)
+      0 50% / 50% 100%,
+    radial-gradient(circle at 50% 50%, #888 25%, transparent 26%);
+  background-repeat: no-repeat;
+  border: 0.25em solid transparent;
+  border-left: 0.4em solid #d8d8d8;
+  transition:
+    border-left-color 0.1s 0.3s ease-out,
+    transform 0.3s ease-out;
+  transform: translateX(-22.5%);
+  transform-origin: 25% 50%;
+  width: 1.2em;
+  height: 1em;
+  box-sizing: border-box;
+}
+
+/* Checked (Dark Mode) */
+.l:checked {
+  background-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 0.125em 0.125em 0 0.125em rgba(0, 0, 0, 0.1) inset;
+}
+
+.l:checked:before {
+  background-color: currentColor;
+  transform: translateX(125%);
+}
+
+.l:checked:after {
+  border-left-color: currentColor;
+  transform: translateX(-2.5%) rotateY(180deg);
+}
+
+.l:focus {
+  outline: none;
+}
+
+/* ============================================
+   LEAD AE — Sidebar "SupportHotline" nav button
+   Scoped & collision-free
+   ============================================ */
+
+/* Per-sidebar palette tokens (dark defaults) */
+.sidebar {
+  --lae-nav-bg: linear-gradient(to bottom, #1e293b, #0b1220);
+  --lae-nav-bg-hover: linear-gradient(to bottom, #243447, #0c1322);
+  --lae-nav-bg-active: linear-gradient(to bottom, #1b2a3b, #0a111d);
+  --lae-nav-border: #0b1220;
+  --lae-nav-border-active: #3b82f6;    /* brand blue */
+  --lae-nav-fg: #e5e7eb;              /* slate-200 */
+  --lae-nav-fg-hover: #f1f5f9;
+  --lae-nav-fg-active: #ffffff;
+
+  /* shadow stack tuned for LEAD AE palette */
+  --lae-nav-shadow-outer: 0 6px 16px -10px rgba(59, 130, 246, 0.45);
+  --lae-inset-1: inset 0 -6px 18px -6px rgba(3, 15, 20, 0);
+  --lae-inset-2: inset rgba(30, 41, 59, 0.95) -1px -1px 6px 0px;
+  --lae-inset-L: inset 12px 0px 12px -6px rgba(3, 15, 20, 0);
+  --lae-inset-R: inset -12px 0px 12px -6px rgba(3, 15, 20, 0);
+}
+
+/* Light mode palette overrides */
+body:not(.dark-mode) .sidebar {
+  --lae-nav-bg: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+  --lae-nav-bg-hover: linear-gradient(to bottom, #dce3ec, #c2cedb);
+  --lae-nav-bg-active: linear-gradient(to bottom, #d2dae3, #bac7d5);
+  --lae-nav-border: #0f172a;
+  --lae-nav-border-active: #3b82f6;
+  --lae-nav-fg: #0f172a;
+  --lae-nav-fg-hover: #0b1220;
+  --lae-nav-fg-active: #000000;
+  --lae-nav-shadow-outer: 0 6px 14px -8px rgba(15, 23, 42, 0.25);
+}
+
+/* ============================================
+   LEAD AE — Sidebar Buttons (Internal 3D Shadows)
+   ============================================ */
+
+.sidebar ul > li.tab.lae-navbtn {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  margin: 0 0 var(--space-3) 0;  /* 12px – on the spacing scale */
+  padding: 0.4em 0.6em;
+  box-sizing: border-box;
+  border-radius: 0.25em;
+
+  background: var(--lae-nav-bg);
+  color: var(--lae-nav-fg);
+
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.15;
+
+  border: 1px solid var(--lae-nav-border);
+
+  /* ✅ Internal 3D lighting only */
+  box-shadow:
+    inset 0 6px 10px -4px rgba(255, 255, 255, 0.08),   /* top highlight */
+    inset 0 -6px 10px -4px rgba(0, 0, 0, 0.5);         /* bottom shadow */
+
+  transition:
+    box-shadow 0.25s ease,
+    background-color 0.25s ease,
+    transform 0.2s ease,
+    border-color 0.25s ease,
+    color 0.2s ease;
+}
+
+/* Hover & Active states */
+.sidebar ul > li.tab.lae-navbtn:hover,
+.sidebar ul > li.tab.lae-navbtn.active {
+  background: var(--lae-nav-bg-hover);
+  color: var(--lae-nav-fg-hover);
+  border-color: var(--lae-nav-border-active);
+  box-shadow:
+    inset 0 6px 10px -4px rgba(255, 255, 255, 0.12),
+    inset 0 -6px 10px -4px rgba(0, 0, 0, 0.65);
+}
+
+/* Pressed look (more depth) */
+.sidebar ul > li.tab.lae-navbtn:active {
+  background: var(--lae-nav-bg-active);
+  color: var(--lae-nav-fg-active);
+  box-shadow:
+    inset 0 2px 6px -2px rgba(0, 0, 0, 0.8),
+    inset 0 -2px 6px -2px rgba(255, 255, 255, 0.05);
+}
+
+/* Text micro-animation (same as before) */
+.sidebar ul > li.tab.lae-navbtn .lae-navbtn__text {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+
+.sidebar ul > li.tab.lae-navbtn:hover .lae-navbtn__text { transform: scale(0.96); }
+.sidebar ul > li.tab.lae-navbtn:active .lae-navbtn__text { transform: scale(0.92); }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar ul > li.tab.lae-navbtn,
+  .sidebar ul > li.tab.lae-navbtn .lae-navbtn__text {
+    transition: none;
+  }
+}
+
+/* ✅ Narrow Checksum Method dropdown specifically for Ingest panel */
+#ingest .field-group.horizontal .dropdown-wrapper {
+  width: 10rem;
+  min-width: 60px;
+  flex: 0 0 auto;
+}
+
+#ingest .field-group.horizontal .chosen-value {
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 0.25rem 1.25rem 0.25rem 0.25rem;
+}
+
+/* 🐹 Correctly scaled Hamster Wheel — 50% visual size */
+.wheel-and-hamster {
+  --dur: 1s;
+  position: relative;
+  width: 12em;       /* keep original logical size */
+  height: 12em;
+  font-size: 14px;   /* keep base for correct geometry */
+  margin: auto;
+
+  /* shrink visually, not logically */
+  transform: scale(0.4);
+  transform-origin: center;
+}
+
+.wheel,
+.hamster,
+.hamster div,
+.spoke {
+  position: absolute;
+}
+
+.wheel,
+.spoke {
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wheel {
+  background: radial-gradient(100% 100% at center,
+    hsla(0,0%,60%,0) 47.8%,
+    hsl(0,0%,60%) 48%);
+  z-index: 2;
+}
+
+.hamster {
+  animation: hamster var(--dur) ease-in-out infinite;
+  top: 50%;
+  left: calc(50% - 3.5em);
+  width: 7em;
+  height: 3.75em;
+  transform: rotate(4deg) translate(-0.8em, 1.85em);
+  transform-origin: 50% 0;
+  z-index: 1;
+}
+
+.hamster__body {
+  animation: hamsterBody var(--dur) ease-in-out infinite;
+  background: hsl(30,90%,90%);
+  border-radius: 50% 30% 50% 30% / 15% 60% 40% 40%;
+  top: 0.25em;
+  left: 2em;
+  width: 4.5em;
+  height: 3em;
+  transform-origin: 17% 50%;
+  box-shadow:
+    0.1em 0.75em 0 hsl(30,90%,55%) inset,
+    0.15em -0.5em 0 hsl(30,90%,80%) inset;
+}
+
+.hamster__head {
+  animation: hamsterHead var(--dur) ease-in-out infinite;
+  background: hsl(30,90%,55%);
+  border-radius: 70% 30% 0 100% / 40% 25% 25% 60%;
+  box-shadow:
+    0 -0.25em 0 hsl(30,90%,80%) inset,
+    0.75em -1.55em 0 hsl(30,90%,90%) inset;
+  top: 0;
+  left: -2em;
+  width: 2.75em;
+  height: 2.5em;
+  transform-origin: 100% 50%;
+}
+
+.hamster__ear {
+  animation: hamsterEar var(--dur) ease-in-out infinite;
+  background: hsl(0,90%,85%);
+  border-radius: 50%;
+  box-shadow: -0.25em 0 hsl(30,90%,55%) inset;
+  top: -0.25em;
+  right: -0.25em;
+  width: 0.75em;
+  height: 0.75em;
+}
+
+.hamster__eye {
+  animation: hamsterEye var(--dur) linear infinite;
+  background: #000;
+  border-radius: 50%;
+  top: 0.375em;
+  left: 1.25em;
+  width: 0.5em;
+  height: 0.5em;
+}
+
+.hamster__nose {
+  background: hsl(0,90%,75%);
+  border-radius: 35% 65% 85% 15% / 70% 50% 50% 30%;
+  top: 0.75em;
+  left: 0;
+  width: 0.2em;
+  height: 0.25em;
+}
+
+.hamster__limb--fr,
+.hamster__limb--fl {
+  clip-path: polygon(0 0,100% 0,70% 80%,60% 100%,0% 100%,40% 80%);
+  top: 2em;
+  left: 0.5em;
+  width: 1em;
+  height: 1.5em;
+  transform-origin: 50% 0;
+}
+
+.hamster__limb--fr {
+  animation: hamsterFRLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,80%) 80%,hsl(0,90%,75%) 80%);
+  transform: rotate(15deg) translateZ(-1px);
+}
+
+.hamster__limb--fl {
+  animation: hamsterFLLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,90%) 80%,hsl(0,90%,85%) 80%);
+  transform: rotate(15deg);
+}
+
+.hamster__limb--br,
+.hamster__limb--bl {
+  border-radius: 0.75em 0.75em 0 0;
+  clip-path: polygon(0 0,100% 0,100% 30%,70% 90%,70% 100%,30% 100%,40% 90%,0% 30%);
+  top: 1em;
+  left: 2.8em;
+  width: 1.5em;
+  height: 2.5em;
+  transform-origin: 50% 30%;
+}
+
+.hamster__limb--br {
+  animation: hamsterBRLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,80%) 90%,hsl(0,90%,75%) 90%);
+  transform: rotate(-25deg) translateZ(-1px);
+}
+
+.hamster__limb--bl {
+  animation: hamsterBLLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,90%) 90%,hsl(0,90%,85%) 90%);
+  transform: rotate(-25deg);
+}
+
+.hamster__tail {
+  animation: hamsterTail var(--dur) linear infinite;
+  background: hsl(0,90%,85%);
+  border-radius: 0.25em 50% 50% 0.25em;
+  box-shadow: 0 -0.2em 0 hsl(0,90%,75%) inset;
+  top: 1.5em;
+  right: -0.5em;
+  width: 1em;
+  height: 0.5em;
+  transform: rotate(30deg) translateZ(-1px);
+  transform-origin: 0.25em 0.25em;
+}
+
+.spoke {
+  animation: spoke var(--dur) linear infinite;
+  background:
+    radial-gradient(100% 100% at center,hsl(0,0%,60%) 4.8%,hsla(0,0%,60%,0) 5%),
+    linear-gradient(hsla(0,0%,55%,0) 46.9%,hsl(0,0%,65%) 47% 52.9%,hsla(0,0%,65%,0) 53%) 50% 50% / 99% 99% no-repeat;
+}
+
+/* Animations */
+@keyframes hamster {
+  from, to { transform: rotate(4deg) translate(-0.8em,1.85em); }
+  50% { transform: rotate(0) translate(-0.8em,1.85em); }
+}
+@keyframes hamsterHead {
+  from,25%,50%,75%,to { transform: rotate(0); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(8deg); }
+}
+@keyframes hamsterEye {
+  from,90%,to { transform: scaleY(1); }
+  95% { transform: scaleY(0); }
+}
+@keyframes hamsterEar {
+  from,25%,50%,75%,to { transform: rotate(0); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(12deg); }
+}
+@keyframes hamsterBody {
+  from,25%,50%,75%,to { transform: rotate(0); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(-2deg); }
+}
+@keyframes hamsterFRLimb {
+  from,25%,50%,75%,to { transform: rotate(50deg) translateZ(-1px); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(-30deg) translateZ(-1px); }
+}
+@keyframes hamsterFLLimb {
+  from,25%,50%,75%,to { transform: rotate(-30deg); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(50deg); }
+}
+@keyframes hamsterBRLimb {
+  from,25%,50%,75%,to { transform: rotate(-60deg) translateZ(-1px); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(20deg) translateZ(-1px); }
+}
+@keyframes hamsterBLLimb {
+  from,25%,50%,75%,to { transform: rotate(20deg); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(-60deg); }
+}
+@keyframes hamsterTail {
+  from,25%,50%,75%,to { transform: rotate(30deg) translateZ(-1px); }
+  12.5%,37.5%,62.5%,87.5% { transform: rotate(10deg) translateZ(-1px); }
+}
+@keyframes spoke {
+  from { transform: rotate(0); }
+  to { transform: rotate(-1turn); }
+}
+
+/* 🧭 Adobe Automate Controls Row Layout — Final Fixed */
+.adobe-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+#loader-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-left: 0.5rem;
+}
+
+#adobe-progress {
+  width: 250px;
+  height: 0.25em;
+  border: none;
+  border-radius: 0.125em;
+  background: transparent;
+  vertical-align: middle;
+}
+
+/* Ingest & Transcode inline loaders: match #loader-inline from Adobe Automate */
+#ingest-loader-inline,
+#transcode-loader-inline,
+#speedtest-loader-inline,
+#transcribe-loader-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-left: 0.5rem;
+}
+
+/* Keep the thin, unobtrusive progress bar */
+#ingest-progress,
+#transcode-progress,
+#speedtest-progress {
+  width: 250px;
+  height: 0.25em;
+  border: none;
+  border-radius: 0.125em;
+  background: transparent;
+  vertical-align: middle;
+}
+
+/* Percent output style (same as Adobe) */
+#ingest-loader-inline output,
+#transcode-loader-inline output,
+#speedtest-loader-inline output,
+#transcribe-loader-inline output {
+  font-size: 0.9rem;
+  font-family: monospace;
+  color: var(--progress-accent-text);
+  margin-left: 0.3rem;
+  position: relative;
+  top: -0.15em;
+}
+
+/* ETA inline, same look as the % output */
+#ingest-loader-inline .eta-inline,
+#transcode-loader-inline .eta-inline,
+#speedtest-loader-inline .eta-inline,
+#transcribe-loader-inline .eta-inline {
+  font-size: 0.9rem;
+  font-family: monospace;
+  color: var(--progress-accent-text);
+  margin-left: 0.25rem;
+  position: relative;
+  top: -0.15em;
+  white-space: nowrap;
+}
+
+/* Inline single-line status that replaces the progress bar */
+#loader-inline .adobe-stage-line {
+  display: inline-block;
+  width: 250px;      /* match #adobe-progress width */
+  height: 1.25em;
+  line-height: 1.25em;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Never show the legacy multi-line list for Adobe Automate */
+#cep-task-list {
+  display: none !important;
+}
+
+/* Percent output above bar */
+#loader-inline output {
+  font-size: 0.9rem;
+  font-family: monospace;
+  color: var(--progress-accent-text);
+  margin-left: 0.3rem;
+  position: relative;
+  top: -0.15em;
+}
+
+/* 🧭 Adobe Automate Controls Row Layout — Final 40% Scale Alignment */
+#cep-job-status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  /* sized exactly for a 0.4-scaled 12em wheel (~4.8em visual size ≈ 75–80 px) */
+  width: 90px;
+  height: 90px;
+
+  overflow: visible;        /* ✅ allow full wheel to render inside panel */
+  position: relative;
+}
+
+/* 🐹 Centered & properly scaled hamster wheel */
+#cep-job-status .wheel-and-hamster {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.4);  /* ✅ true 40 % visual scale */
+  transform-origin: center;
+  margin: 0;
+
+  /* keep original geometry for correct internal math */
+  width: 12em;
+  height: 12em;
+  font-size: 14px;
+}
+
+/* Hamster container on the far right (mirror #cep-job-status) */
+#ingest-job-status,
+#transcode-job-status,
+#speedtest-job-status,
+#transcribe-job-status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 90px;   /* sized for a scaled 12em wheel */
+  height: 90px;
+  overflow: visible;
+  position: relative;
+}
+
+/* Center and scale hamster like Adobe Automate */
+#ingest-job-status .wheel-and-hamster,
+#transcode-job-status .wheel-and-hamster,
+#speedtest-job-status .wheel-and-hamster,
+#transcribe-job-status .wheel-and-hamster {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.4);
+  transform-origin: center;
+  margin: 0;
+  width: 12em;
+  height: 12em;
+  font-size: 14px;
+}
+
+/* When the row is locked during a job, keep Cancel, progress, and hamster bright */
+#ingest-lock-controls.locked #ingest-loader-inline,
+#ingest-lock-controls.locked #ingest-progress,
+#ingest-lock-controls.locked #ingest-job-status {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/* 🌐 UNIVERSAL: bottom rhythm for groups (applies in all panels) */
+.panel-section .field-group,
+.panel-section .checkbox-grid,
+.panel-section .checkbox-row,
+.panel-section .checkbox-stack {
+  margin-bottom: var(--space-3); /* 12px between rows/blocks */
+}
+
+/* Blue = normal checked */
+.folder-tree input[type="checkbox"]:checked:not(.partial) {
+  accent-color: #2196f3;
+}
+
+/* Red = folders-only (.partial applied by JS) */
+.folder-tree input[type="checkbox"].partial {
+  accent-color: #e53935;
+}
+
+/* Scroll wrapper owns the frame so the border never moves */
+.file-info-scroll {
+  width: 100%;
+  max-width: 100%;
+  max-height: 220px;
+  overflow-x: auto;
+  overflow-y: auto;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco,
+                   Consolas, 'Liberation Mono', 'Courier New', monospace);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0;
+  box-sizing: border-box;
+  background: #fafafa;
+}
+
+/* When grid is in placeholder state, kill horizontal scroll entirely */
+.file-info-scroll.no-hscroll {
+  overflow-x: hidden;
+}
+
+/* Dark mode frame */
+body.dark-mode .file-info-scroll {
+  border-color: #374151;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+/* === Compact File Info Grid === */
+.file-info-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(160px, var(--col-file, 220px))
+    minmax(80px,  var(--col-format, 120px))
+    minmax(120px, var(--col-resolution, 140px))
+    minmax(70px,  var(--col-fps, 90px))
+    minmax(140px, var(--col-audio, 160px))
+    minmax(var(--col-duration, 120px), 1fr);
+  grid-auto-rows: minmax(32px, auto);
+
+  position: relative;
+  border: none;                 /* ⬅️ border moved to wrapper */
+  border-radius: 0;
+  box-shadow: none;
+
+  /* key: can grow wider than the frame, but never smaller */
+  min-width: 100%;
+  width: max-content;
+  max-width: none;
+  box-sizing: border-box;
+
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Vertical column borders — light mode */
+.file-info-grid .file-info-grid-header,
+.file-info-row > div {
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* No extra border at the far right column */
+.file-info-grid .file-info-grid-header:nth-child(6n),
+.file-info-row > div:nth-child(6n) {
+  border-right: none;
+}
+
+/* Apply cell styling to BOTH header cells and data cells */
+.file-info-grid > div,
+.file-info-row > div {
+  padding: 6px 14px 6px 10px;  /* extra 4px on the right for breathing room */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.file-info-grid .file-info-grid-header {
+  padding: 8px 14px 8px 10px;  /* match body cell spacing for alignment */
+  font-weight: 600;
+  background: #fafafa;
+  color: #1e293b;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.15); /* ✅ row separator */
+}
+
+.file-info-row {
+  display: contents; /* each file fills the grid row cells */
+  text-align: center;
+  text-overflow: ellipsis;
+  padding: 8px;
+}
+
+/* small inline warning icon for file rows */
+.file-info-row .file-warn {
+  margin-left: 6px;
+  font-size: 12px;
+  vertical-align: middle;
+  opacity: 0.9;
+  cursor: default;
+  user-select: none;
+  color: #f0c040;
+}
+
+body.dark-mode .file-info-row .file-warn {
+  color: #facc15;
+}
+
+.file-info-grid.placeholder {
+  background: #fafafa;
+  min-height: 40px;
+}
+
+.file-info-grid.placeholder .file-info-grid-header {
+  position: static;
+  border-bottom: 0;           /* 🔧 kill the extra bottom line */
+}
+
+/* Drag handle shown on header hover */
+.file-info-grid .resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.file-info-grid .file-info-grid-header:hover .resize-handle { opacity: .6; }
+.file-info-grid.resizing { user-select: none; cursor: col-resize; }
+
+body.dark-mode .file-info-grid {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.dark-mode .file-info-row > div {
+  border-bottom: 1px solid #2d3648;
+}
+
+body.dark-mode .file-info-grid .file-info-grid-header {
+  background: #111827;
+  color: #e2e8f0;
+  border-bottom: 1px solid #374151;
+}
+
+body.dark-mode .file-info-grid.placeholder .file-info-grid-header {
+  border-bottom: 0;           /* same fix for dark mode */
+}
+
+/* Vertical column borders — dark mode */
+body.dark-mode .file-info-grid .file-info-grid-header,
+body.dark-mode .file-info-row > div {
+  border-right: 1px solid #374151;
+}
+
+body.dark-mode .file-info-grid .file-info-grid-header:nth-child(6n),
+body.dark-mode .file-info-row > div:nth-child(6n) {
+  border-right: none;
+}
+
+body.dark-mode .file-info-grid.placeholder {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+/* Hide legacy path textareas – grid replaces them visually */
+#inputFiles,
+#transcribe-files,
+#adobe-source-path {
+  display: none !important;
+}
+/* Log viewer container */
+#live-log-view {
+  overflow-y: auto;
+}
+
+/* Each log line: default to single-line truncation */
+#live-log-view > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wrap mode: readable multi-line with preserved spacing */
+#live-log-view.wrap-lines > div {
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+}
+
+#expand-task-details[aria-pressed="true"] {
+  outline: 1px solid var(--progress-accent-end);
+  outline-offset: 2px;
+}
+
+/* Subtitle Editor overlay */
+/* Ensure the subtitle editor sits on top in the pop-out window */
+body.subtitle-editor-window .subtitle-editor { z-index: 3000; }
+
+/* No embedded editor inside the main app */
+body:not(.subtitle-editor-window) #subtitle-editor-overlay { display: none !important; }
+
+/* Standalone pop-out window: fill available space, no app chrome offsets */
+body.subtitle-editor-window .subtitle-editor {
+  position: fixed;
+  inset: 8px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 6px 18px rgba(0,0,0,.2);
+  /* Ensure overlay sits above any app chrome */
+  z-index: 3000;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--gap-sm);
+  padding: .75rem;
+}
+body.dark-mode .subtitle-editor { background: #0f172a; border-color: #374151; }
+
+/* Hide main UI chrome inside the pop-out to avoid overlay collisions */
+body.subtitle-editor-window #window-content,
+body.subtitle-editor-window .sidebar,
+body.subtitle-editor-window .title-divider,
+body.subtitle-editor-window #panel-toolbar-wrapper {
+  display: none !important;
+}
+
+/* Hide main titlebar in pop-out so it doesn't cover the editor */
+body.subtitle-editor-window #titlebar {
+  display: none !important;
+}
+
+/* Keep toolbar usable when the window is narrow */
+body.subtitle-editor-window #subtitle-editor-overlay .toolbar {
+  position: sticky;
+  top: 0;
+}
+
+.subtitle-editor.hidden { display: none; }
+
+.subtitle-editor .toolbar {
+  display: flex;
+  gap: var(--gap-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Small spacing for new toolbar buttons */
+.subtitle-editor .toolbar .toolbar-actions button + button { margin-left: .5rem; }
+
+/* Compact action buttons inside the subtitle editor toolbar */
+.subtitle-editor .toolbar button {
+  height: 36px;
+  font-size: 14px;
+  padding: 0 0.75rem;
+}
+
+/* SCC alignment control — hidden unless SCC is selected */
+#scc-align-row   { display:none; align-items:center; gap:0.5rem; }
+
+/* SCC channel control — hidden unless SCC is selected */
+#scc-channel-row { display:none; align-items:center; gap:0.5rem; }
+
+/* SCC row policy control — hidden unless SCC/CAP is selected */
+#scc-row-policy-row {
+  display: none;
+  gap: var(--gap-sm);
+  align-items: center;
+}
+#scc-row-policy-row label {
+  margin-right: var(--space-2);
+}
+
+/* SCC EOF + Roll-clear controls — hidden unless SCC selected */
+#scc-eof-row,
+#scc-roll-clear-row { display:none; align-items:center; gap:0.5rem; }
+
+/* Stack the preview on top; cues fill below */
+.subtitle-editor .main {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "preview"
+    "cues";
+  gap: .75rem;
+  min-height: 300px;
+}
+
+.subtitle-editor .preview { grid-area: preview; }
+.subtitle-editor .cue-list { grid-area: cues; }
+
+.subtitle-editor .cue-list {
+  overflow: auto;
+  font-family: var(--font-mono);
+  border: 1px solid rgba(0,0,0,.15);
+}
+body.dark-mode .subtitle-editor .cue-list { border-color: #374151; }
+
+/* De-cramp the rows: wider timecode columns + more breathing room */
+.subtitle-editor .cue {
+  display: grid;
+  grid-template-columns: 14ch 14ch 1fr;  /* startTC | endTC | text */
+  gap: .6rem .75rem;
+  padding: .45rem .65rem;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  line-height: 1.35;
+}
+
+.subtitle-editor .cue input[type="text"],
+.subtitle-editor .cue textarea {
+  font-family: var(--font-mono);
+  padding: .2rem .45rem;
+  font-size: 0.95rem;
+}
+
+.subtitle-editor .cue input[type="text"] {
+  height: 1.8rem;
+}
+
+.subtitle-editor .cue textarea {
+  resize: vertical;
+  min-height: 2.2rem;
+  line-height: 1.35;
+}
+
+/* Center the frame and keep the preview compact (no extra horizontal spread) */
+.subtitle-editor .preview {
+  display: grid;
+  gap: var(--gap-sm);
+  align-content: start;
+  justify-items: center;
+}
+
+/* The video frame: sized to the actual video aspect, clipped, and bordered */
+.subtitle-editor .preview-video-host {
+  position: relative;
+  inline-size: min(100%, 960px);                 /* responsive width cap */
+  aspect-ratio: var(--video-aspect, 16 / 9);     /* JS sets real ratio */
+  margin-inline: auto;
+  background: #000;
+  border: 1px solid rgba(0,0,0,.25);
+  overflow: hidden;                               /* clip grid & captions to frame */
+}
+body.dark-mode .subtitle-editor .preview-video-host { border-color: #374151; }
+
+/* ===== Safe‑title overlay (rows 12–15) ===== */
+.safe-title-overlay { position:absolute; inset:0; pointer-events:none; z-index:5; }
+.safe-title-overlay .col-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(32, 1fr);
+  grid-template-rows: 1fr;
+  pointer-events: auto;
+}
+.safe-title-overlay .col-hit { cursor: crosshair; background: transparent; height: 100%; }
+.safe-title-overlay .placement-marker {
+  position: absolute; width: 2px; height: 14px; background: #3b82f6;
+  transform: translate(-1px, -50%); z-index: 6; pointer-events: none;
+}
+.safe-title-overlay .row-guide {
+  position: absolute; left: 0; right: 0; height: 0;
+  border-top: 1px dashed rgba(0,0,0,.35);
+}
+.safe-title-overlay .row-guide.highlight { border-top-style: solid; border-top-color: #3b82f6; }
+.safe-title-overlay .row-label {
+  position: absolute; right: 6px; top: 0; transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: 12px; line-height: 1;
+  padding: 0 4px; border-radius: 2px; background: rgba(255,255,255,.75); color: #000;
+}
+body.dark-mode .safe-title-overlay .row-guide { border-top-color: rgba(255,255,255,.45); }
+body.dark-mode .safe-title-overlay .row-guide.highlight { border-top-color: #60a5fa; }
+body.dark-mode .safe-title-overlay .row-label { background: rgba(0,0,0,.6); color: #fff; }
+
+/* ─────────────────────────────────────────────
+   Subtitle editor container & toolbar ergonomics
+   ───────────────────────────────────────────── */
+#subtitle-editor-overlay {
+  /* keep the editor usable on small screens */
+  max-height: 90vh;
+  max-width: 96vw;
+  overflow: auto;
+  box-sizing: border-box;
+  width: min(1200px, 96vw);
+  margin: 0 auto;
+  padding-bottom: .75rem;
+}
+
+/* Never show the overlay until JS marks it ready */
+#subtitle-editor-overlay:not(.is-ready) { display: none !important; }
+/* Also respect explicit hidden states */
+#subtitle-editor-overlay[aria-hidden="true"],
+#subtitle-editor-overlay.hidden { display: none !important; }
+/* Belt-and-suspenders: if somehow empty, don't block the app */
+#subtitle-editor-overlay:empty { display: none !important; }
+
+#subtitle-editor-overlay .toolbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;      /* wrap buttons/toggles to next line */
+  gap: var(--gap-sm);
+  padding: var(--space-2);
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+  overflow-x: auto;     /* horizontal scroll if a single row overflows */
+}
+body.dark-mode #subtitle-editor-overlay .toolbar { background: rgba(15,23,42,0.9); }
+
+/* Make form controls in the toolbar compact so more fit per row */
+#subtitle-editor-overlay .toolbar input[type="checkbox"] {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+/* ===== Row/Indent inspector (status strip) ===== */
+#row-indent-inspector {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: .9;
+  margin-left: auto; /* push to the right in status row */
+  white-space: nowrap;
+}
+
+/* Video fills the frame; the frame decides the aspect/size */
+.subtitle-editor .preview video {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  background: #000;
+  object-fit: contain;
+}
+
+/* overlays already absolutely fill the host and are now clipped by overflow */
+
+/* Nice fallback on very narrow windows: cues tighten but video still scales */
+@media (max-width: 1100px) {
+  .subtitle-editor .cue {
+    grid-template-columns: 13ch 13ch 1fr;
+  }
+}
+
+.subtitle-editor .status-row {
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.subtitle-editor .cue.active {
+  background: rgba(59, 130, 246, 0.15);
+}
+body.dark-mode .subtitle-editor .cue.active {
+  background: rgba(96, 165, 250, 0.25);
+}
+
+.subtitle-editor #subtitle-editor-status.text-error {
+  color: #dc2626;
+}
+body.dark-mode .subtitle-editor #subtitle-editor-status.text-error {
+  color: #f87171;
+}
+
+/* Preview guides/inspector */
+.subtitle-editor .guides-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.subtitle-editor .inspector-badge {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 4px 6px;
+  font: 12px/1.2 var(--font-sans, system-ui, -apple-system, Segoe UI, Roboto);
+  color: #fff;
+  background: rgba(0,0,0,.55);
+  border-radius: 4px;
+  pointer-events: none;
+}
