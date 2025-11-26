@@ -1454,7 +1454,30 @@
 <line x1="12" x2="12" y1="8" y2="8"></line>
 </svg>
 </div>
-<div class="tooltip" id="proxy-settings-tooltip"></div>
+<div class="tooltip" id="proxy-settings-tooltip">
+  <div class="tooltip-content">
+    <div class="tooltip-header">PROXY SETTINGS</div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">What this controls</span>
+      <ul class="tooltip-list">
+        <li>Where proxy media is written on disk.</li>
+        <li>Which Adobe Media Encoder preset (or Match Source) is used.</li>
+        <li>How proxies are attached back to master clips in Premiere.</li>
+      </ul>
+    </div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">Attachment rules</span>
+      <ul class="tooltip-list">
+        <li>Container must match the source (<strong>.mov</strong> / <strong>.mp4</strong>).</li>
+        <li>Resolution / frame size must match the source.</li>
+        <li>Frame rate must match the source.</li>
+        <li>Audio layout must be compatible (stereo ↔ stereo, multichannel ↔ multichannel).</li>
+      </ul>
+    </div>
+  </div>
+</div>
 </div>
 </div>
 <div class="proxy-settings-wrapper">
