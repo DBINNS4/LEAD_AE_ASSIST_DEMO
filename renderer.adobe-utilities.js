@@ -2484,27 +2484,6 @@ ipc?.on('queue-job-complete', (_e, job) => {
         hidden.dataset.proxyChangeBound = 'true';
       }
 
-      const tooltip = document.getElementById('proxy-settings-tooltip');
-      if (tooltip) {
-        tooltip.innerHTML = `
-    <div class="tooltip-content">
-      <div class="tooltip-header">Proxy Preset Details</div>
-      <div class="tooltip-section">
-        <span class="tooltip-subtitle">Preset Folder</span>
-        <div class="tooltip-path">${proxyPresetDir}</div>
-      </div>
-      <div class="tooltip-section">
-        <span class="tooltip-subtitle">Attachment Rules</span>
-        <ul class="tooltip-list">
-          <li>Container must match (<strong>mov/mp4</strong>)</li>
-          <li>Resolution / frame size must match source</li>
-          <li>Frame rate must match source</li>
-          <li>Audio must be <strong>discrete-layout parity</strong> with source (per stream): Stereo↔Stereo, Dual-Mono↔Dual-Mono, NxMono↔NxMono</li>
-        </ul>
-      </div>
-    </div>
-  `;
-      }
     } catch (err) {
       console.error('❌ Could not load Adobe Media Encoder presets:', err);
     }

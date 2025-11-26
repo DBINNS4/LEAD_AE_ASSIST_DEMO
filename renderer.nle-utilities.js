@@ -187,78 +187,8 @@ document.getElementById('avid-scan-subfolders')?.addEventListener('change', () =
 const avidResetSiteBtn = document.getElementById('avid-reset-site');
 const avidBackupSiteCheckbox = document.getElementById('avid-backup-settings');
 
-avidResetSiteBtn?.addEventListener('click', async () => {
-  const baseFolder = avid.pathField.value;
-  if (!baseFolder) {
-    avid.summary.textContent += `\n❌ Please select an Avid folder first.`;
-    return;
-  }
-  if (await ipc.isMediaComposerRunning?.()) {
-    avid.summary.textContent += `\n⚠️ Media Composer is currently running. Quit it before resetting.`;
-    return;
-  }
-  const siteFolder = path.join(baseFolder, 'Site_Settings');
-
-  const confirmed = await ipc.showConfirm?.(
-    "This will permanently delete Avid site setting files:\n\n• .xml, .pref, .set, .txt\n\nDo you want to continue?"
-  );
-  if (!confirmed) {
-    avid.summary.textContent += `\n⛔ Site settings reset canceled by user.`;
-    return;
-  }
-
-  // 🔒 Check for lock files before deleting
-  try {
-    const lockFiles = fs.readdirSync(siteFolder).filter(f => f.toLowerCase().endsWith('.lck'));
-    if (lockFiles.length) {
-      avid.summary.textContent += `\n⚠️ Lock files detected in ${siteFolder}: ${lockFiles.join(', ')}. Close Media Composer and try again.`;
-      return;
-    }
-  } catch (err) {
-    avid.summary.textContent += `\n❌ Failed to scan for .lck files: ${err.message}`;
-    return;
-  }
-
-  const extensions = ['.xml', '.pref', '.set', '.txt'];
-  const deleted = [];
-  const backedUp = [];
-
-  try {
-    if (avidBackupSiteCheckbox?.checked) {
-      const today = new Date().toISOString().split('T')[0];
-      const backupFolder = path.join(siteFolder, `Site_Backup_${today}`);
-      fs.mkdirSync(backupFolder, { recursive: true });
-
-      extensions.forEach(ext => {
-        const files = fs.readdirSync(siteFolder).filter(f => f.toLowerCase().endsWith(ext));
-        files.forEach(file => {
-          const src = path.join(siteFolder, file);
-          const dest = path.join(backupFolder, file);
-          fs.copyFileSync(src, dest);
-          backedUp.push(file);
-        });
-      });
-
-      avid.summary.textContent += `\n📦 Backed up ${backedUp.length} file(s) to:\n${backupFolder}`;
-    }
-
-    extensions.forEach(ext => {
-      const files = fs.readdirSync(siteFolder).filter(f => f.toLowerCase().endsWith(ext));
-      files.forEach(file => {
-        const filePath = path.join(siteFolder, file);
-        fs.unlinkSync(filePath);
-        deleted.push(file);
-      });
-    });
-
-    if (deleted.length) {
-      avid.summary.textContent += `\n🧹 Deleted site setting files:\n${deleted.join(', ')}`;
-    } else {
-      avid.summary.textContent += `\n✅ No .xml/.pref/.set files found to delete.`;
-    }
-  } catch (err) {
-    avid.summary.textContent += `\n❌ Error resetting site settings: ${err.message}`;
-  }
+avidResetSiteBtn?.addEventListener('click', () => {
+  // DEMO: Reset Site Settings is visual-only; no files are touched.
 });
 
 // ===============================
@@ -267,80 +197,8 @@ avidResetSiteBtn?.addEventListener('click', async () => {
 const avidResetUserBtn = document.getElementById('avid-reset-user');
 const avidBackupCheckbox = document.getElementById('avid-backup-settings');
 
-avidResetUserBtn?.addEventListener('click', async () => {
-  const baseFolder = avid.pathField.value;
-  if (!baseFolder) {
-    avid.summary.textContent += `\n❌ Please select an Avid folder first.`;
-    return;
-  }
-  if (await ipc.isMediaComposerRunning?.()) {
-    avid.summary.textContent += `\n⚠️ Media Composer is currently running. Quit it before resetting.`;
-    return;
-  }  
-  const folder = path.join(baseFolder, 'Users', 'EditorName');
-  
-  const confirmed = await ipc.showConfirm?.(
-    "This will permanently delete Avid user setting files:\n\n• .avs (user prefs)\n• .xml (site/global prefs)\n• .pref (state/preferences)\n\nDo you want to continue?"
-  );
-  if (!confirmed) {
-    avid.summary.textContent += `\n⛔ Deletion canceled by user.`;
-    return;
-  }
-
-  // 🔒 Check for lock files before deleting
-  try {
-    const lockFiles = fs.readdirSync(folder).filter(f => f.toLowerCase().endsWith('.lck'));
-    if (lockFiles.length) {
-      avid.summary.textContent += `\n⚠️ Lock files detected in ${folder}: ${lockFiles.join(', ')}. Close Media Composer and try again.`;
-      return;
-    }
-  } catch (err) {
-    avid.summary.textContent += `\n❌ Failed to scan for .lck files: ${err.message}`;
-    return;
-  }
-
-  const extensions = ['.avs', '.xml', '.pref'];
-  const deleted = [];
-  const backedUp = [];
-
-  try {
-    // 🔒 Optional Backup
-    if (avidBackupCheckbox.checked) {
-      const today = new Date().toISOString().split('T')[0]; // → "2025-05-27"
-      const backupFolder = path.join(folder, `User_Backup_${today}`);
-      fs.mkdirSync(backupFolder, { recursive: true });
-
-      extensions.forEach(ext => {
-        const files = fs.readdirSync(folder).filter(f => f.toLowerCase().endsWith(ext));
-        files.forEach(file => {
-          const src = path.join(folder, file);
-          const dest = path.join(backupFolder, file);
-          fs.copyFileSync(src, dest);
-          backedUp.push(file);
-        });
-      });
-
-      avid.summary.textContent += `\n📦 Backed up ${backedUp.length} file(s) to:\n${backupFolder}`;
-    }
-
-    // 🧹 Delete settings
-extensions.forEach(ext => {
-  const files = fs.readdirSync(folder).filter(f => f.toLowerCase().endsWith(ext));
-  files.forEach(file => {
-    const filePath = path.join(folder, file);
-    fs.unlinkSync(filePath);
-    deleted.push(file);
-  });
-});
-
-    if (deleted.length) {
-      avid.summary.textContent += `\n🧹 Deleted user setting files:\n${deleted.join(', ')}`;
-    } else {
-      avid.summary.textContent += `\n✅ No .avs/.xml/.pref files found to delete.`;
-    }
-  } catch (err) {
-    avid.summary.textContent += `\n❌ Error: ${err.message}`;
-  }
+avidResetUserBtn?.addEventListener('click', () => {
+  // DEMO: Reset User Settings is visual-only; no files or prefs are modified.
 });
 
 // ===============================
