@@ -1782,7 +1782,29 @@
 <line x1="12" x2="12" y1="8" y2="8"></line>
 </svg>
 </div>
-<div class="tooltip tooltip-bottom" id="preferences-overview-tooltip"></div>
+              <div class="tooltip tooltip-bottom" id="preferences-overview-tooltip">
+                <div class="tooltip-content">
+                  <div class="tooltip-header">PREFERENCES PANEL OVERVIEW</div>
+
+                  <div class="tooltip-section">
+                    <span class="tooltip-subtitle">What this panel is for</span>
+                    <ul class="tooltip-list">
+                      <li>Control global behaviour of the Lead AE Assist app.</li>
+                      <li>Configure notifications, offline mode, theme, and language.</li>
+                      <li>Set up webhooks and logging defaults used by other panels.</li>
+                    </ul>
+                  </div>
+
+                  <div class="tooltip-section">
+                    <span class="tooltip-subtitle">Quick workflow</span>
+                    <ul class="tooltip-list">
+                      <li><strong>General</strong> – enable system notifications and offline mode.</li>
+                      <li><strong>Appearance</strong> – choose light/dark theme and app language.</li>
+                      <li><strong>AI / Webhooks</strong> – enter API key, webhook URL, and logging rules.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
 </div>
 </div>
 <!-- General Preferences -->
@@ -1837,10 +1859,9 @@
 <div class="field-group">
 <button class="btn-danger" id="reset-preferences">Reset Preferences</button>
 </div>
-<div class="field-group preferences-footer">
-<span id="app-version"></span>
-<a class="report-bug-link" data-i18n="reportBug" href="https://www.leadae.com/bug-report" target="_blank">Report Bug</a>
-</div>
+            <div class="field-group preferences-footer">
+              <span id="app-version"></span>
+            </div>
 </div>
 <div class="toast" data-i18n="preferencesSaved" id="prefs-toast"></div>
 </div></main>
