@@ -248,14 +248,40 @@
 <button data-i18n="load" id="ingest-load-config"></button>
 <!-- Ingest panel overview tooltip (top-right, like Adobe Automate) -->
 <div class="tooltip-container">
-<div class="icon">
-<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
-<circle cx="12" cy="12" r="10"></circle>
-<line x1="12" x2="12" y1="16" y2="12"></line>
-<line x1="12" x2="12" y1="8" y2="8"></line>
-</svg>
-</div>
-<div class="tooltip tooltip-bottom" id="ingest-overview-tooltip"></div>
+  <div class="icon">
+    <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" x2="12" y1="16" y2="12"></line>
+      <line x1="12" x2="12" y1="8" y2="8"></line>
+    </svg>
+  </div>
+  <div class="tooltip tooltip-bottom" id="ingest-overview-tooltip">
+    <div class="tooltip-content">
+      <div class="tooltip-header">INGEST PANEL OVERVIEW</div>
+
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">What this panel is for</span>
+        <ul class="tooltip-list">
+          <li>Securely copy camera cards or source folders to your main project volume.</li>
+          <li>Optionally send a second copy to a backup volume.</li>
+          <li>Filter which files or folders are included in the ingest.</li>
+          <li>Control verification and logging for every ingest job.</li>
+        </ul>
+      </div>
+
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">Quick workflow</span>
+        <ul class="tooltip-list">
+          <li><strong>Input</strong> - choose the card, drive, or watch folder you want to ingest.</li>
+          <li><strong>Output</strong> - set the destination and (optionally) a backup path.</li>
+          <li><strong>File Handling</strong> - configure includes/excludes, clone filters, and threading.</li>
+          <li><strong>Verification &amp; Logging</strong> - pick a verification method and enable log files.</li>
+          <li><strong>Automation</strong> - toggle webhooks/log forwarding if you're wiring into n8n/ops.</li>
+          <li><strong>Run</strong> - click <em>Start Ingest</em> and watch the Job Preview + status log.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 </div>
 <div id="ingest-lock-wrapper">
@@ -290,14 +316,37 @@
 <label><input id="clone-show-file-count" type="checkbox"/><span data-i18n="showFileCount"></span></label>
 <!-- Clone Mode tooltip – same positioning style as Verification & Logging -->
 <div class="tooltip-container clone-mode-tooltip-container">
-<div class="icon">
-<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
-<circle cx="12" cy="12" r="10"></circle>
-<line x1="12" x2="12" y1="16" y2="12"></line>
-<line x1="12" x2="12" y1="8" y2="8"></line>
-</svg>
-</div>
-<div class="tooltip" id="clone-mode-tooltip"></div>
+  <div class="icon">
+    <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" x2="12" y1="16" y2="12"></line>
+      <line x1="12" x2="12" y1="8" y2="8"></line>
+    </svg>
+  </div>
+  <div class="tooltip" id="clone-mode-tooltip">
+    <div class="tooltip-content">
+      <div class="tooltip-header">CLONE MODE OVERVIEW</div>
+
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">What Clone Mode does</span>
+        <ul class="tooltip-list">
+          <li>Treats the source as a folder tree instead of a flat file list.</li>
+          <li>Only copies the folders you select in the Clone tree.</li>
+          <li>Preserves original folder structure at the destination.</li>
+          <li>Still respects your include/exclude extension filters and verification settings.</li>
+        </ul>
+      </div>
+
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">Controls in this row</span>
+        <ul class="tooltip-list">
+          <li><strong>Filter</strong> - type text to narrow the folder tree by name.</li>
+          <li><strong>Select All</strong> - select/deselect every folder in the tree.</li>
+          <li><strong>Show File Count</strong> - show per-folder file counts (slower on huge trees).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
 </div>
 <div class="status-log folder-tree" id="clone-folder-tree"><span data-i18n="folderTreePlaceholder"></span></div>
