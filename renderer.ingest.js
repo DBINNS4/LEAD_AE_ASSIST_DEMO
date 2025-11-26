@@ -636,69 +636,6 @@ function initIngestPanel(resetDefaults = false) {
     }
   });
 
-  // Clone Mode tooltip – matches Ingest panel tooltip behavior
-  const cloneModeTooltip = document.querySelector('#ingest #clone-mode-tooltip');
-  if (cloneModeTooltip && !cloneModeTooltip.dataset.bound) {
-    cloneModeTooltip.innerHTML = `
-      <div class="tooltip-content">
-        <div class="tooltip-header">CLONE MODE OVERVIEW</div>
-
-        <div class="tooltip-section">
-          <span class="tooltip-subtitle">What Clone Mode does</span>
-          <ul class="tooltip-list">
-            <li>Treats the source as a folder tree instead of a flat file list.</li>
-            <li>Only copies the folders you select in the Clone tree.</li>
-            <li>Preserves original folder structure at the destination.</li>
-            <li>Still respects your include/exclude extension filters and verification settings.</li>
-          </ul>
-        </div>
-
-        <div class="tooltip-section">
-          <span class="tooltip-subtitle">Controls in this row</span>
-          <ul class="tooltip-list">
-            <li><strong>Filter</strong> - type text to narrow the folder tree by name.</li>
-            <li><strong>Select All</strong> - select/deselect every folder in the tree.</li>
-            <li><strong>Show File Count</strong> - show per-folder file counts (slower on huge trees).</li>
-          </ul>
-        </div>
-      </div>
-    `;
-    cloneModeTooltip.dataset.bound = 'true';
-  }
-
-  // Top-right Ingest overview tooltip (matches Adobe Automate style)
-  const ingestOverviewTooltip = document.querySelector('#ingest #ingest-overview-tooltip');
-  if (ingestOverviewTooltip && !ingestOverviewTooltip.dataset.bound) {
-    ingestOverviewTooltip.innerHTML = `
-      <div class="tooltip-content">
-        <div class="tooltip-header">INGEST PANEL OVERVIEW</div>
-
-        <div class="tooltip-section">
-          <span class="tooltip-subtitle">What this panel is for</span>
-          <ul class="tooltip-list">
-            <li>Securely copy camera cards or source folders to your main project volume.</li>
-            <li>Optionally send a second copy to a backup volume.</li>
-            <li>Filter which files or folders are included in the ingest.</li>
-            <li>Control verification and logging for every ingest job.</li>
-          </ul>
-        </div>
-
-        <div class="tooltip-section">
-          <span class="tooltip-subtitle">Quick workflow</span>
-          <ul class="tooltip-list">
-            <li><strong>Input</strong> - choose the card, drive, or watch folder you want to ingest.</li>
-            <li><strong>Output</strong> - set the destination and (optionally) a backup path.</li>
-            <li><strong>File Handling</strong> - configure includes/excludes, clone filters, and threading.</li>
-            <li><strong>Verification & Logging</strong> - pick a verification method and enable log files.</li>
-            <li><strong>Automation</strong> - toggle webhooks/log forwarding if you're wiring into n8n/ops.</li>
-            <li><strong>Run</strong> - click <em>Start Ingest</em> and watch the Job Preview + status log.</li>
-          </ul>
-        </div>
-      </div>
-    `;
-    ingestOverviewTooltip.dataset.bound = 'true';
-  }
-
   refreshPresetDropdown();
   // ⛔ Do not auto-populate the job preview on first load
   bindIngestPreviewAutoUpdate();

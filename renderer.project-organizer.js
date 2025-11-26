@@ -582,33 +582,10 @@ function updateAttachmentIndicators() {
   });
 }
 
-// 🧠 Generate Folder Structure
-el.generateButton?.addEventListener('click', async () => {
-  const config = {
-    rootName: el.rootName.value,
-    selectedFolders: [...selectedFolders],
-    prependNumbers: el.prependNumbers.checked,
-    outputPath: el.outputPath.value,
-    folderAssets
-  };
-
-  const genMsg = '⚙️ Generating structure...';
-  logOrganizer(genMsg);
-  el.summary.textContent = genMsg;
-
-  updateFolderAssetPaths();
-
-  const result = await ipc.invoke('run-project-organizer', config);
-
-  if (result.success) {
-    const successMsg = result.logText ?? result.log.join('\n');
-    logOrganizer(successMsg);
-    el.summary.textContent = successMsg;
-  } else {
-    const errMsg = result.logText ?? (result.log?.join('\n') || '❌ Unknown error');
-    logOrganizer(errMsg, { isError: true });
-    el.summary.textContent = errMsg;
-  }
+// 🧠 Generate Folder Structure (demo: disabled click)
+el.generateButton?.addEventListener('click', () => {
+  // In the interactive demo, this button is visual-only.
+  // Hover and press states are styled via CSS; no logic runs here.
 });
 
 // 💾 Save and Load Preset

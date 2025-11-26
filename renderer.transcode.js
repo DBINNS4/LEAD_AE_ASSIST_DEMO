@@ -520,6 +520,14 @@ async function filterContainerOptions(format) {
   const hidden = document.getElementById('containerFormat');
   const list = hidden?.closest('.dropdown-wrapper')?.querySelector('.value-list');
   if (!list || !hidden) return;
+  // DEMO-SAFE: if no compat data, leave all options visible and don't force a value.
+  if (!valid.length) {
+    [...list.children].forEach(li => {
+      li.style.display = '';
+    });
+    return;
+  }
+
   [...list.children].forEach(li => {
     const isValid = valid.includes(li.dataset.value);
     li.style.display = isValid ? '' : 'none';
@@ -565,18 +573,31 @@ function filterGenericOptions(hiddenEl, allowed) {
   if (!hiddenEl) return;
   const list = hiddenEl.closest('.dropdown-wrapper')?.querySelector('.value-list');
   if (!list) return;
+  // DEMO-SAFE: if there are no constraints, show all options untouched.
+  if (!allowed || (Array.isArray(allowed) && allowed.length === 0)) {
+    [...list.children].forEach(li => {
+      li.style.display = '';
+      li.style.color = '';
+    });
+    return;
+  }
+
   [...list.children].forEach(li => {
-    const baseVal = li.dataset.value.endsWith('df') ? li.dataset.value.replace('df', '') : li.dataset.value;
-    const valid = !allowed || allowed.includes(li.dataset.value) || allowed.includes(baseVal) || li.dataset.value === 'preserve';
+    const baseVal = li.dataset.value.endsWith('df')
+      ? li.dataset.value.replace('df', '')
+      : li.dataset.value;
+    const valid =
+      allowed.includes(li.dataset.value) ||
+      allowed.includes(baseVal) ||
+      li.dataset.value === 'preserve';
     li.style.display = valid ? '' : 'none';
     li.style.color = valid ? '' : '#9ca3af';
   });
-  if (allowed) {
-    const current = hiddenEl.value;
-    const baseCurrent = current.endsWith('df') ? current.replace('df', '') : current;
-    if (!allowed.includes(current) && !allowed.includes(baseCurrent) && current !== 'preserve') {
-      setDropdownValue(hiddenEl.id, allowed[0] || 'preserve');
-    }
+
+  const current = hiddenEl.value;
+  const baseCurrent = current.endsWith('df') ? current.replace('df', '') : current;
+  if (!allowed.includes(current) && !allowed.includes(baseCurrent) && current !== 'preserve') {
+    setDropdownValue(hiddenEl.id, allowed[0] || 'preserve');
   }
 }
 
@@ -1144,8 +1165,10 @@ const audioWrapperList = ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'opus'];
 let cachedAudioCodecList = [];
 async function initAudioCodecDropdown() {
   const codecs = await window.codex?.listAudioCodecs?.();
-  cachedAudioCodecList = (codecs || Object.keys(sampleRateCompatibility))
-    .filter(k => !k.startsWith('avid_'))
+  // DEMO-SAFE: fall back to a static shortlist if Codex is unavailable
+  const base = (Array.isArray(codecs) && codecs.length) ? codecs : audioWrapperList;
+  cachedAudioCodecList = base
+    .filter(k => typeof k === 'string' && !k.startsWith('avid_'))
     .sort();
   setupStyledDropdown('audioCodec', cachedAudioCodecList);
   setDropdownValue('audioCodec', el.audioCodec.value || '');
@@ -1251,23 +1274,32 @@ el.audioCodec?.addEventListener('change', async () => {
   const constraints = await window.codex?.getAudioConstraints?.(codec);
   const allowed = constraints?.containers || [];
   const list = el.containerFormat.closest('.dropdown-wrapper')?.querySelector('.value-list');
-  if (list) {
-    [...list.children].forEach(li => {
-      const isValid = allowed.includes(li.dataset.value);
-      li.style.display = isValid ? '' : 'none';
-    });
-  }
-  if (!allowed.includes(el.containerFormat.value)) {
-    setDropdownValue('containerFormat', allowed[0] || '');
+
+  // DEMO-SAFE: if we don't have constraint info, don't hide anything.
+  if (!constraints || !allowed.length) {
+    if (list) {
+      [...list.children].forEach(li => {
+        li.style.display = '';
+      });
+    }
+    el.status.textContent = '';
+    el.status.style.color = '';
+  } else {
+    if (list) {
+      [...list.children].forEach(li => {
+        const isValid = allowed.includes(li.dataset.value);
+        li.style.display = isValid ? '' : 'none';
+      });
+    }
+    if (!allowed.includes(el.containerFormat.value)) {
+      setDropdownValue('containerFormat', allowed[0] || '');
+    }
+    el.status.textContent = `🎧 ${codec} supports: ${allowed.join(', ')}`;
+    el.status.style.color = '';
   }
 
   await filterSampleRates('', el);
   await filterChannels('', el);
-
-  el.status.textContent = allowed.length
-    ? `🎧 ${codec} supports: ${allowed.join(', ')}`
-    : `⚠️ ${codec} has no valid containers`;
-  el.status.style.color = allowed.length ? '' : '#dc2626';
 });
 
 // 🟡 Show/hide compatibility warnings for containers
