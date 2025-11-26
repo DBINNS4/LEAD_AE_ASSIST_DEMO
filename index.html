@@ -451,10 +451,15 @@
 <div class="panel-toolbar-controls">
 <button class="delete-preset-btn" data-panel="transcode" disabled="" title="Delete Preset">🗑️</button>
 <div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="transcode-preset" name="transcode-preset" type="hidden"/>
+  <input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+  <ul class="value-list">
+    <li data-value="none">No Preset</li>
+    <li data-value="prores_1080p">ProRes 422 LT – 1080p</li>
+    <li data-value="prores_4k">ProRes 422 HQ – 4K UHD</li>
+    <li data-value="h264_proxy">H.264 Proxies – 1080p</li>
+  </ul>
+  <span class="dropdown-arrow"></span>
+  <input id="transcode-preset" name="transcode-preset" type="hidden"/>
 </div>
 <button data-i18n="save" id="saveTranscodePreset"></button>
 <button data-i18n="load" id="loadTranscodePreset"></button>
@@ -505,41 +510,71 @@
 <div class="video-grid-3col">
 <!-- Column 1 -->
 <div class="form-item">
-<label data-i18n="outputFormat" for="outputFormat"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Output Format" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="outputFormat" name="outputFormat" type="hidden"/>
-</div>
+  <label data-i18n="outputFormat" for="outputFormat"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Output Format" type="text"/>
+    <ul class="value-list">
+      <li data-value="prores_422">Apple ProRes 422</li>
+      <li data-value="prores_422_lt">Apple ProRes 422 LT</li>
+      <li data-value="prores_422_hq">Apple ProRes 422 HQ</li>
+      <li data-value="prores_4444">Apple ProRes 4444</li>
+      <li data-value="h264">H.264</li>
+      <li data-value="h265">H.265 / HEVC</li>
+      <li data-value="dnxhd">Avid DNxHD / DNxHR</li>
+      <li data-value="proxy">Lightweight Proxy</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="outputFormat" name="outputFormat" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
-<label data-i18n="containerFormat" for="containerFormat"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Container Format" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="containerFormat" name="containerFormat" type="hidden"/>
-</div>
+  <label data-i18n="containerFormat" for="containerFormat"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Container Format" type="text"/>
+    <ul class="value-list">
+      <li data-value="mov">QuickTime (.mov)</li>
+      <li data-value="mp4">MP4 (.mp4)</li>
+      <li data-value="mxf">MXF</li>
+      <li data-value="webm">WebM</li>
+      <li data-value="image_seq">Image Sequence</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="containerFormat" name="containerFormat" type="hidden"/>
+  </div>
 </div>
 <!-- Column 2 -->
 <div class="form-item">
-<label data-i18n="resolution" for="resolution"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Resolution" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="resolution" name="resolution" type="hidden"/>
-</div>
+  <label data-i18n="resolution" for="resolution"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Resolution" type="text"/>
+    <ul class="value-list">
+      <li data-value="1920x1080">1920×1080 (HD)</li>
+      <li data-value="2048x1080">2048×1080 (2K DCI)</li>
+      <li data-value="3840x2160">3840×2160 (UHD)</li>
+      <li data-value="4096x2160">4096×2160 (4K DCI)</li>
+      <li data-value="1280x720">1280×720 (720p)</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="resolution" name="resolution" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
-<label data-i18n="frameRate" for="frameRate"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Frame Rate" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="frameRate" name="frameRate" type="hidden"/>
-</div>
+  <label data-i18n="frameRate" for="frameRate"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Frame Rate" type="text"/>
+    <ul class="value-list">
+      <li data-value="23.976">23.976</li>
+      <li data-value="24">24.000</li>
+      <li data-value="25">25.000</li>
+      <li data-value="29.97">29.97</li>
+      <li data-value="30">30.000</li>
+      <li data-value="50">50.000</li>
+      <li data-value="59.94">59.94</li>
+      <li data-value="60">60.000</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="frameRate" name="frameRate" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
 <label data-i18n="crf" for="crf"></label>
@@ -547,31 +582,43 @@
 </input></div>
 <!-- Column 3 -->
 <div class="form-item">
-<label data-i18n="pixelFormat" for="pixelFormat"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Pixel Format" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="pixelFormat" name="pixelFormat" type="hidden"/>
-</div>
-</div>
-<div class="form-item">
-<label data-i18n="colorRange" for="colorRange"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Color Range" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="colorRange" name="colorRange" type="hidden"/>
-</div>
+  <label data-i18n="pixelFormat" for="pixelFormat"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Pixel Format" type="text"/>
+    <ul class="value-list">
+      <li data-value="yuv420p">YUV 4:2:0 8-bit (yuv420p)</li>
+      <li data-value="yuv422p">YUV 4:2:2 8-bit (yuv422p)</li>
+      <li data-value="yuv422p10le">YUV 4:2:2 10-bit (yuv422p10le)</li>
+      <li data-value="yuv444p10le">YUV 4:4:4 10-bit (yuv444p10le)</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="pixelFormat" name="pixelFormat" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
-<label data-i18n="fieldOrder" for="fieldOrder"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Field Order" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="fieldOrder" name="fieldOrder" type="hidden"/>
+  <label data-i18n="colorRange" for="colorRange"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Color Range" type="text"/>
+    <ul class="value-list">
+      <li data-value="limited">Video (16–235)</li>
+      <li data-value="full">Full (0–255)</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="colorRange" name="colorRange" type="hidden"/>
+  </div>
 </div>
+<div class="form-item">
+  <label data-i18n="fieldOrder" for="fieldOrder"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Field Order" type="text"/>
+    <ul class="value-list">
+      <li data-value="progressive">Progressive</li>
+      <li data-value="upper">Interlaced – Upper Field First</li>
+      <li data-value="lower">Interlaced – Lower Field First</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="fieldOrder" name="fieldOrder" type="hidden"/>
+  </div>
 </div>
 </div>
 </details>
@@ -583,40 +630,63 @@
 </div>
 <div class="video-grid-3col">
 <div class="form-item">
-<label data-i18n="audioCodec" for="audioCodec"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Audio Codec" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="audioCodec" name="audioCodec" type="hidden"/>
-</div>
-</div>
-<div class="form-item">
-<label data-i18n="channels" for="channels"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Channels" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="channels" name="channels" type="hidden"/>
-</div>
+  <label data-i18n="audioCodec" for="audioCodec"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Audio Codec" type="text"/>
+    <ul class="value-list">
+      <li data-value="copy">Preserve source audio (copy)</li>
+      <li data-value="pcm_s16le">PCM 16-bit (wav)</li>
+      <li data-value="aac">AAC</li>
+      <li data-value="ac3">Dolby Digital (AC-3)</li>
+      <li data-value="mp3">MP3</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="audioCodec" name="audioCodec" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
-<label data-i18n="sampleRate" for="sampleRate"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Sample Rate" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="sampleRate" name="sampleRate" type="hidden"/>
-</div>
+  <label data-i18n="channels" for="channels"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Channels" type="text"/>
+    <ul class="value-list">
+      <li data-value="preserve">Preserve source layout</li>
+      <li data-value="1">Mono (1.0)</li>
+      <li data-value="2">Stereo (2.0)</li>
+      <li data-value="6">5.1</li>
+      <li data-value="8">7.1</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="channels" name="channels" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
-<label data-i18n="audioBitrate" for="audioBitrate"></label>
-<div class="dropdown-wrapper dropdown-display">
-<input class="chosen-value" placeholder="Audio Bitrate" type="text"/>
-<ul class="value-list"></ul>
-<span class="dropdown-arrow"></span>
-<input id="audioBitrate" name="audioBitrate" type="hidden"/>
+  <label data-i18n="sampleRate" for="sampleRate"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Sample Rate" type="text"/>
+    <ul class="value-list">
+      <li data-value="preserve">Preserve source</li>
+      <li data-value="44100">44.1 kHz</li>
+      <li data-value="48000">48 kHz</li>
+      <li data-value="96000">96 kHz</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="sampleRate" name="sampleRate" type="hidden"/>
+  </div>
 </div>
+<div class="form-item">
+  <label data-i18n="audioBitrate" for="audioBitrate"></label>
+  <div class="dropdown-wrapper dropdown-display">
+    <input class="chosen-value" placeholder="Audio Bitrate" type="text"/>
+    <ul class="value-list">
+      <li data-value="96k">96 kbps</li>
+      <li data-value="128k">128 kbps</li>
+      <li data-value="192k">192 kbps</li>
+      <li data-value="256k">256 kbps</li>
+      <li data-value="320k">320 kbps</li>
+    </ul>
+    <span class="dropdown-arrow"></span>
+    <input id="audioBitrate" name="audioBitrate" type="hidden"/>
+  </div>
 </div>
 <div class="form-item">
 <label data-i18n="audioDelay" for="audioDelay"></label>
