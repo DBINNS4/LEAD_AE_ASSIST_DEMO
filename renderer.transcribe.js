@@ -177,12 +177,9 @@ Welcome to Lead AE. I am here to Assist.
   }
 
   function sampleSCC() {
-    const text = "Welcome to Lead AE. I am here to Assist.";
-    const hex = asciiToHex(text);
-    // PAC 9420 = row 15, white, no italics/bold
     return `Scenarist_SCC V1.0
 
-00:00:01;00 9420 ${hex}`;
+00:00:01;00 9420 5765 6C63 6F6D 6520 746F 204C 6561 6420 4145 2E20 4920 616D 2068 6572 6520 746F 2041 7373 6973 742E`;
   }
 
   function sampleBurnIn() {
