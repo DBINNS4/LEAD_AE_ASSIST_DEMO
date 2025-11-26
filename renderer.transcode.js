@@ -2,6 +2,83 @@
 
 
 /* global setupStyledDropdown, setDropdownValue */
+
+// Local dropdown helpers for the demo – ignore Codex, just make the menus work.
+function setupStyledDropdown(hiddenId, values) {
+  const hidden = document.getElementById(hiddenId);
+  if (!hidden) return;
+
+  const wrapper = hidden.closest('.dropdown-wrapper');
+  const chosen  = wrapper?.querySelector('.chosen-value');
+  const list    = wrapper?.querySelector('.value-list');
+  if (!wrapper || !chosen || !list) return;
+
+  list.innerHTML = '';
+
+  (values || []).forEach(v => {
+    let value, label;
+
+    if (typeof v === 'string') {
+      value = v;
+      label = v;
+    } else if (v && typeof v === 'object') {
+      value = v.value;
+      label = v.label != null ? v.label : String(v.value ?? '');
+    } else {
+      return;
+    }
+
+    const li = document.createElement('li');
+    li.dataset.value = String(value ?? '');
+    li.textContent   = label;
+
+    li.addEventListener('click', () => {
+      hidden.value = String(value ?? '');
+      if ('value' in chosen) {
+        chosen.value = label;
+      } else {
+        chosen.textContent = label;
+      }
+      list.classList.remove('open');
+      chosen.classList.remove('open');
+      wrapper.classList.remove('open');
+      hidden.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    list.appendChild(li);
+  });
+
+  if (!chosen.dataset.dropdownBound) {
+    chosen.addEventListener('click', () => {
+      const isOpen = list.classList.toggle('open');
+      chosen.classList.toggle('open', isOpen);
+      wrapper.classList.toggle('open', isOpen);
+    });
+    chosen.dataset.dropdownBound = 'true';
+  }
+}
+
+function setDropdownValue(hiddenId, value) {
+  const hidden = document.getElementById(hiddenId);
+  if (!hidden) return;
+
+  const wrapper = hidden.closest('.dropdown-wrapper');
+  const chosen  = wrapper?.querySelector('.chosen-value');
+  const list    = wrapper?.querySelector('.value-list');
+  if (!wrapper || !chosen || !list) return;
+
+  const valStr = String(value ?? '');
+  const match = Array.from(list.children).find(li => li.dataset.value === valStr);
+  if (!match) return;
+
+  hidden.value = match.dataset.value;
+  if ('value' in chosen) {
+    chosen.value = match.textContent;
+  } else {
+    chosen.textContent = match.textContent;
+  }
+}
+
   // Collapse all detail sections on load
 document.querySelectorAll('#transcode details').forEach(section => {
   section.open = false;
@@ -1225,17 +1302,15 @@ setDropdownValue('audioBitrate', el.audioBitrate.value || '');
 
 function initVerificationDropdown() {
   const hidden = document.getElementById('transcode-verification-method');
-  if (!hidden || typeof window.setupStyledDropdown !== 'function') return;
+  if (!hidden) return;
 
-  window.setupStyledDropdown('transcode-verification-method', [
-    { value: 'metadata', label: 'Duration / Frame' },
+  setupStyledDropdown('transcode-verification-method', [
+    { value: 'metadata',  label: 'Duration / Frame' },
     { value: 'ssim_psnr', label: 'SSIM / PSNR' }
   ]);
 
-  if (typeof window.setDropdownValue === 'function') {
-    // Respect any preloaded value; default to 'metadata'
-    window.setDropdownValue('transcode-verification-method', hidden.value || 'metadata');
-  }
+  // Respect any preloaded value; default to 'metadata'
+  setDropdownValue('transcode-verification-method', hidden.value || 'metadata');
 }
 
 // Panel scripts are lazy‑loaded after the main DOM in renderer.js.
