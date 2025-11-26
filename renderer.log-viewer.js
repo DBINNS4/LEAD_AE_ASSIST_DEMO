@@ -279,7 +279,10 @@ function resetLogViewer() {
   showInitMessage();
 }
 
-  el.exportBtn?.addEventListener('click', exportLog);
+  // DEMO: Export Logs button is visual-only (hover/press).
+  el.exportBtn?.addEventListener('click', () => {
+    // no-op
+  });
   el.resetBtn?.addEventListener('click', resetLogViewer);
 
   function initIpcLogs() {
@@ -308,9 +311,8 @@ function resetLogViewer() {
     });
   }
 
-  el.selectExportBtn?.addEventListener("click", async () => {
-    const folder = await ipc.selectFolder?.();
-    if (folder) el.exportPathInput.value = folder;
+  el.selectExportBtn?.addEventListener("click", () => {
+    // DEMO: no-op
   });
 
   // Repurpose: Wrap/Unwrap long lines in-place (no I/O, no re-render needed)

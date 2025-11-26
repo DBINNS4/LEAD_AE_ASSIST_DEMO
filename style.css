@@ -1705,7 +1705,7 @@ select.compact {
   margin: 0 0 0 0.5rem;
 }
 
-.icon {
+.tooltip-container .icon {
   width: 20px;
   height: 20px;
   display: flex;
@@ -1734,11 +1734,11 @@ body.dark-mode .tooltip-container .icon {
   border-color: #f9fafb;
 }
 
-.icon svg {
+.tooltip-container .icon svg {
   transition: transform 0.5s ease-in-out;
 }
 
-.icon:hover svg {
+.tooltip-container .icon:hover svg {
   transform: rotate(360deg) scale(1.2);
 }
 
