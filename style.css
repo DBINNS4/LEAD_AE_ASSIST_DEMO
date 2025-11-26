@@ -1711,7 +1711,27 @@ select.compact {
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 999px;
+  border: 1px solid currentColor;   /* always draw a circle, even if SVG is subtle */
+  box-sizing: border-box;
   transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Make tooltip icons clearly visible in both themes */
+body:not(.dark-mode) .tooltip-container .icon {
+  color: #111827;          /* dark gray on light background */
+  border-color: #111827;
+}
+
+body.dark-mode .tooltip-container .icon {
+  color: #f9fafb;          /* near-white on dark background */
+  border-color: #f9fafb;
+}
+
+/* Extra insurance for the top toolbar version */
+#panel-toolbar .tooltip-container .icon {
+  color: #f9fafb;
+  border-color: #f9fafb;
 }
 
 .icon svg {
@@ -1720,11 +1740,6 @@ select.compact {
 
 .icon:hover svg {
   transform: rotate(360deg) scale(1.2);
-}
-
-/* Make overview tooltip icons visible on the dark top toolbar */
-#panel-toolbar .tooltip-container .icon {
-  color: #f9fafb;  /* light strokes so the "i" shows up */
 }
 
 .tooltip {
