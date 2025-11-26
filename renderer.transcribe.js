@@ -20,71 +20,61 @@
   }
 
   ready(() => {
-    // Engine
     dd("transcribe-engine", [
-      { value: "whisper",      label: "Whisper" },
-      { value: "whisperx",     label: "WhisperX" },
-      { value: "faster_whisper", label: "Faster-Whisper" },
-      { value: "openai",       label: "OpenAI Cloud" }
-    ], "whisper");
+      { value: "whisperx", label: "WhisperX" },
+      { value: "whisper",  label: "WhisperAPI" },
+      { value: "lead",     label: "Lead AI" }
+    ], "lead");
 
-    // Language
     dd("transcribe-language", [
-      { value: "auto", label: "Auto Detect" },
-      { value: "en",   label: "English" },
-      { value: "es",   label: "Spanish" },
-      { value: "fr",   label: "French" },
-      { value: "de",   label: "German" },
-      { value: "it",   label: "Italian" },
-      { value: "pt",   label: "Portuguese" },
-      { value: "zh",   label: "Chinese" },
-      { value: "ja",   label: "Japanese" }
+      { value: "en", label: "English (EN)" },
+      { value: "es", label: "Spanish (ES)" },
+      { value: "fr", label: "French (FR)" },
+      { value: "de", label: "German (DE)" },
+      { value: "ja", label: "Japanese (JA)" },
+      { value: "zh", label: "Chinese (ZH)" }
+    ], "en");
+
+    dd("transcribe-accuracy-mode", [
+      { value: "fast",     label: "Fast" },
+      { value: "auto",     label: "Auto" },
+      { value: "accurate", label: "Accurate" }
     ], "auto");
 
-    // Accuracy
-    dd("transcribe-accuracy-mode", [
-      { value: "fast",   label: "Fast" },
-      { value: "normal", label: "Normal" },
-      { value: "accurate", label: "Accurate" }
-    ], "normal");
-
-    // Confidence Threshold
     dd("transcribe-confidence", [
-      { value: "none", label: "No Filter" },
-      { value: "0.25", label: "25%" },
-      { value: "0.50", label: "50%" },
-      { value: "0.75", label: "75%" },
-      { value: "0.90", label: "90%" }
-    ], "none");
+      { value: "50", label: "50%" },
+      { value: "60", label: "60%" },
+      { value: "70", label: "70%" },
+      { value: "80", label: "80%" },
+      { value: "90", label: "90%" },
+      { value: "95", label: "95%" },
+      { value: "99", label: "99%" }
+    ], "90");
 
-    // Output Formats — EXACT REAL OPTIONS
     dd("transcribe-output-formats", [
       { value: "txt",       label: "Plain Text (.txt)" },
       { value: "srt",       label: "SubRip (.srt)" },
       { value: "vtt",       label: "WebVTT (.vtt)" },
-      { value: "scc",       label: "Scenarist (.scc)" },
-      { value: "xml",       label: "XML Transcript (.xml)" },
+      { value: "scc",       label: "Scenarist CC (.scc)" },
       { value: "script",    label: "Scripted (CSV/DOCX)" },
+      { value: "xml",       label: "XML" },
       { value: "finalJson", label: "Final JSON (wrapped)" },
-      { value: "burnIn",    label: "Burn-In MP4 (Preview Only)" }
+      { value: "burnIn",    label: "Burn-in MP4" }
     ], "txt");
 
-    // Timecode style
     dd("transcribe-timecode-style", [
       { value: "ndf", label: "NDF — HH:MM:SS:FF" },
       { value: "df",  label: "DF — HH:MM:SS;FF" },
-      { value: "ms",  label: "Milliseconds — HH:MM:SS,mmm" }
+      { value: "ms",  label: "ms — HH:MM:SS,mmm" }
     ], "ndf");
 
-    // Translate target languages
     dd("translate-target", [
-      { value: "en", label: "English" },
-      { value: "es", label: "Spanish" },
-      { value: "fr", label: "French" },
-      { value: "de", label: "German" },
-      { value: "pt", label: "Portuguese" },
-      { value: "zh", label: "Chinese" },
-      { value: "ja", label: "Japanese" }
+      { value: "en", label: "English (EN)" },
+      { value: "es", label: "Spanish (ES)" },
+      { value: "fr", label: "French (FR)" },
+      { value: "de", label: "German (DE)" },
+      { value: "ja", label: "Japanese (JA)" },
+      { value: "zh", label: "Chinese (ZH)" }
     ], "en");
   });
   
