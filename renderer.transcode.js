@@ -1148,19 +1148,45 @@ if (document.readyState !== 'loading') {
   document.addEventListener('DOMContentLoaded', initContainerFormats);
 }
 
-setupStyledDropdown('resolution', ['720x480', '1280x720', '1920x1080', '3840x2160', '4096x2160']);
-setDropdownValue('resolution', el.resolution.value || '');
-setupStyledDropdown('frameRate', ['23.976', '24', '25', '29.97', '29.97df', '30', '50', '59.94', '59.94df', '60']);
-setDropdownValue('frameRate', el.frameRate.value || '');
-setupStyledDropdown('pixelFormat', ['yuv420p', 'yuv422p', 'yuv444p10le', 'yuv422p10', 'yuv420p10le']);
-setDropdownValue('pixelFormat', el.pixelFormat.value || '');
-setupStyledDropdown('colorRange', [
-  { value: 'limited', label: 'Limited (16–235)' },
-  { value: 'full', label: 'Full (0–255)' }
+setupStyledDropdown('resolution', [
+  { value: '720x480',   label: '720×480' },
+  { value: '1280x720',  label: '1280×720 (720p)' },
+  { value: '1920x1080', label: '1920×1080 (HD)' },
+  { value: '3840x2160', label: '3840×2160 (UHD)' },
+  { value: '4096x2160', label: '4096×2160 (4K DCI)' }
 ]);
-setDropdownValue('colorRange', el.colorRange.value || '');
-setupStyledDropdown('fieldOrder', ['progressive', 'interlaced']);
-setDropdownValue('fieldOrder', el.fieldOrder.value || '');
+setDropdownValue('resolution', el.resolution.value || '1920x1080');
+setupStyledDropdown('frameRate', [
+  { value: '23.976',  label: '23.976' },
+  { value: '24',      label: '24.000' },
+  { value: '25',      label: '25.000' },
+  { value: '29.97',   label: '29.97' },
+  { value: '29.97df', label: '29.97 DF' },
+  { value: '30',      label: '30.000' },
+  { value: '50',      label: '50.000' },
+  { value: '59.94',   label: '59.94' },
+  { value: '59.94df', label: '59.94 DF' },
+  { value: '60',      label: '60.000' }
+]);
+setDropdownValue('frameRate', el.frameRate.value || '23.976');
+setupStyledDropdown('pixelFormat', [
+  { value: 'yuv420p',     label: 'YUV 4:2:0 8-bit (yuv420p)' },
+  { value: 'yuv422p',     label: 'YUV 4:2:2 8-bit (yuv422p)' },
+  { value: 'yuv422p10',   label: 'YUV 4:2:2 10-bit (yuv422p10)' },
+  { value: 'yuv420p10le', label: 'YUV 4:2:0 10-bit (yuv420p10le)' },
+  { value: 'yuv444p10le', label: 'YUV 4:4:4 10-bit (yuv444p10le)' }
+]);
+setDropdownValue('pixelFormat', el.pixelFormat.value || 'yuv422p10');
+setupStyledDropdown('colorRange', [
+  { value: 'limited', label: 'Video (16–235)' },
+  { value: 'full',    label: 'Full (0–255)' }
+]);
+setDropdownValue('colorRange', el.colorRange.value || 'limited');
+setupStyledDropdown('fieldOrder', [
+  { value: 'progressive', label: 'Progressive' },
+  { value: 'interlaced',  label: 'Interlaced' }
+]);
+setDropdownValue('fieldOrder', el.fieldOrder.value || 'progressive');
 const audioWrapperList = ['mp3', 'wav', 'flac', 'm4a', 'ogg', 'opus'];
 let cachedAudioCodecList = [];
 async function initAudioCodecDropdown() {
@@ -1176,11 +1202,17 @@ async function initAudioCodecDropdown() {
 initAudioCodecDropdown();
 setupStyledDropdown('channels', [
   { value: 'preserve', label: 'Preserve Original' },
-  'mono', 'stereo', '5.1', '7.1'
+  { value: '1',        label: 'Mono (1.0)' },
+  { value: '2',        label: 'Stereo (2.0)' },
+  { value: '6',        label: '5.1' },
+  { value: '8',        label: '7.1' }
 ]);
-setDropdownValue('channels', el.channels.value || '');
-setupStyledDropdown('sampleRate', ['44100', '48000']);
-setDropdownValue('sampleRate', el.sampleRate.value || '');
+setDropdownValue('channels', el.channels.value || 'preserve');
+setupStyledDropdown('sampleRate', [
+  { value: '44100', label: '44.1 kHz' },
+  { value: '48000', label: '48 kHz' }
+]);
+setDropdownValue('sampleRate', el.sampleRate.value || '48000');
 setupStyledDropdown('audioBitrate', [
   { value: '96', label: '96 kbps' },
   { value: '128', label: '128 kbps' },
