@@ -711,7 +711,24 @@
 <line x1="12" x2="12" y1="8" y2="8"></line>
 </svg>
 </div>
-<div class="tooltip tooltip-bottom" id="transcribe-overview-tooltip"></div>
+<div class="tooltip tooltip-bottom" id="transcribe-overview-tooltip">
+  <div class="tooltip-content">
+    <div class="tooltip-header">TRANSCRIBE PANEL OVERVIEW</div>
+    <div class="tooltip-body">
+      <p>
+        This panel batches audio/video files into text and caption deliverables.
+        Lead AE Assist does <strong>format routing</strong>, <strong>engine selection</strong>,
+        and <strong>basic QC</strong> for you.
+      </p>
+      <ul>
+        <li><strong>Engine &amp; Language</strong> – pick the transcription engine and language.</li>
+        <li><strong>Output Formats</strong> – choose TXT, SRT, VTT, SCC and JSON exports.</li>
+        <li><strong>Per-format options</strong> – tweak timecode, speaker tags, and caption style.</li>
+        <li><strong>Summary</strong> – see a plain-English description of the job before you run it.</li>
+      </ul>
+    </div>
+  </div>
+</div>
 </div>
 <!-- Spacer pushes ONLY the editor button to the far right -->
 <span class="toolbar-flex-spacer"></span>
@@ -751,7 +768,22 @@
 <line x1="12" x2="12" y1="8" y2="8"></line>
 </svg>
 </div>
-<div class="tooltip" id="transcribe-engine-tooltip"></div>
+<div class="tooltip" id="transcribe-engine-tooltip">
+  <div class="tooltip-content">
+    <div class="tooltip-header">ENGINE &amp; LANGUAGE</div>
+    <div class="tooltip-body">
+      <p>
+        Choose which ASR engine to use and how strict we should be about language and accuracy.
+      </p>
+      <ul>
+        <li><strong>Engine</strong> – cloud or local engines supported by your Lead AE install.</li>
+        <li><strong>Language</strong> – force a language or let the engine auto-detect.</li>
+        <li><strong>Accuracy mode</strong> – trade off speed vs. quality for long jobs.</li>
+        <li><strong>Confidence filter</strong> – drop words below the confidence threshold.</li>
+      </ul>
+    </div>
+  </div>
+</div>
 </div>
 </div>
 <div class="video-grid-4col">
@@ -1510,7 +1542,22 @@
 <line x1="12" x2="12" y1="8" y2="8"></line>
 </svg>
 </div>
-<div class="tooltip tooltip-bottom" id="log-viewer-overview-tooltip"></div>
+<div class="tooltip tooltip-bottom" id="log-viewer-overview-tooltip">
+  <div class="tooltip-content">
+    <div class="tooltip-header">LOG VIEWER OVERVIEW</div>
+    <div class="tooltip-body">
+      <p>
+        This panel shows structured logs for Ingest, Transcode, Transcribe, and Adobe Automate.
+        It’s meant for <strong>troubleshooting</strong> and <strong>post-mortems</strong>, not for clients.
+      </p>
+      <ul>
+        <li><strong>Date / Tool filters</strong> – narrow logs to a window and workflow.</li>
+        <li><strong>Severity badges</strong> – quickly scan for warnings and failures.</li>
+        <li><strong>Export</strong> – dump visible logs as CSV, JSON, or text for support.</li>
+      </ul>
+    </div>
+  </div>
+</div>
 </div>
 </div>
 <!-- Log Filters -->
@@ -1519,7 +1566,12 @@
 <label data-i18n="viewByDate"></label>
 <div class="dropdown-wrapper dropdown-display">
 <input class="chosen-value" placeholder="View by Date" type="text"/>
-<ul class="value-list"></ul>
+<ul class="value-list">
+  <li data-value="today">Today</li>
+  <li data-value="7d">Last 7 days</li>
+  <li data-value="30d">Last 30 days</li>
+  <li data-value="all">All time</li>
+</ul>
 <span class="dropdown-arrow"></span>
 <input id="view-by-date" name="view-by-date" type="hidden"/>
 </div>
@@ -1528,7 +1580,14 @@
 <label data-i18n="viewByTool"></label>
 <div class="dropdown-wrapper dropdown-display">
 <input class="chosen-value" placeholder="View by Tool" type="text"/>
-<ul class="value-list"></ul>
+<ul class="value-list">
+  <li data-value="all">All tools</li>
+  <li data-value="ingest">Ingest</li>
+  <li data-value="transcode">Transcode</li>
+  <li data-value="transcribe">Transcribe</li>
+  <li data-value="adobe">Adobe Automate</li>
+  <li data-value="nle">NLE Utilities</li>
+</ul>
 <span class="dropdown-arrow"></span>
 <input id="view-by-tool" name="view-by-tool" type="hidden"/>
 </div>
@@ -1552,7 +1611,11 @@
 <label>Export Format</label>
 <div class="dropdown-wrapper dropdown-display">
 <input class="chosen-value" placeholder="Export Format" type="text"/>
-<ul class="value-list"></ul>
+<ul class="value-list">
+  <li data-value="csv">CSV</li>
+  <li data-value="json">JSON</li>
+  <li data-value="txt">Plain text</li>
+</ul>
 <span class="dropdown-arrow"></span>
 <input id="export-format" name="export-format" type="hidden"/>
 </div>
@@ -1599,14 +1662,23 @@
 <!-- Theme -->
 <div class="dropdown-wrapper dropdown-display">
 <input class="chosen-value" data-i18n="themePlaceholder" placeholder="Light/Dark" type="text"/>
-<ul class="value-list"></ul>
+<ul class="value-list">
+  <li data-value="system">Follow System</li>
+  <li data-value="light">Light</li>
+  <li data-value="dark">Dark</li>
+</ul>
 <span class="dropdown-arrow"></span>
 <input id="theme-select" name="theme-select" type="hidden"/>
 </div>
 <!-- Language -->
 <div class="dropdown-wrapper dropdown-display">
 <input class="chosen-value" data-i18n="languagePlaceholder" placeholder="Language" type="text"/>
-<ul class="value-list"></ul>
+<ul class="value-list">
+  <li data-value="system">System default</li>
+  <li data-value="en">English (en)</li>
+  <li data-value="es">Spanish (es)</li>
+  <li data-value="fr">French (fr)</li>
+</ul>
 <span class="dropdown-arrow"></span>
 <input id="language-select" name="language-select" type="hidden"/>
 </div>

@@ -21,6 +21,66 @@ document.addEventListener('submit', e => {
   console.warn('⚠️ Prevented unintended form submit');
 });
 
+// Shared styled dropdown helper so demo panels don't depend on the full app bundle
+if (typeof window.setupStyledDropdown !== 'function') {
+  window.setupStyledDropdown = function setupStyledDropdown(hiddenId, values) {
+    const hidden = document.getElementById(hiddenId);
+    if (!hidden) return;
+
+    const wrapper = hidden.closest('.dropdown-wrapper');
+    const chosen = wrapper?.querySelector('.chosen-value');
+    const list   = wrapper?.querySelector('.value-list');
+
+    if (!wrapper || !list || !chosen) return;
+
+    // Clear any existing items and rebuild from the provided values
+    list.innerHTML = '';
+    values.forEach(v => {
+      const li = document.createElement('li');
+      li.textContent = v.label;
+      li.dataset.value = String(v.value);
+
+      li.addEventListener('click', () => {
+        hidden.value = String(v.value);
+        chosen.value = v.label;
+
+        list.classList.remove('open');
+        chosen.classList.remove('open');
+        wrapper.classList.remove('open');
+
+        const ev = new Event('change', { bubbles: true });
+        hidden.dispatchEvent(ev);
+      });
+
+      list.appendChild(li);
+    });
+  };
+}
+
+if (typeof window.setDropdownValue !== 'function') {
+  window.setDropdownValue = function setDropdownValue(hiddenId, value) {
+    const hidden = document.getElementById(hiddenId);
+    if (!hidden) return;
+
+    const wrapper = hidden.closest('.dropdown-wrapper');
+    const chosen = wrapper?.querySelector('.chosen-value');
+    const list   = wrapper?.querySelector('.value-list');
+
+    if (!wrapper || !list || !chosen) return;
+
+    const match = Array.from(list.children).find(
+      li => li.dataset.value === String(value)
+    );
+    if (!match) return;
+
+    hidden.value = match.dataset.value;
+    chosen.value = match.textContent;
+
+    const ev = new Event('change', { bubbles: true });
+    hidden.dispatchEvent(ev);
+  };
+}
+
 
 // 🌐 Shared Watch Mode configs for panels
 const PANEL_PRESET_EXTENSIONS = ['.json'];
