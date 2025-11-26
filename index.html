@@ -822,22 +822,22 @@
     <div class="tooltip-header">TRANSCRIBE PANEL OVERVIEW</div>
 
     <div class="tooltip-section">
-      <span class="tooltip-subtitle">What this panel is for</span>
+      <span class="tooltip-subtitle">Purpose</span>
       <ul class="tooltip-list">
-        <li>Batch audio or video into text transcripts and caption files.</li>
-        <li>Handle format routing, engine selection, and basic QC.</li>
-        <li>Export multiple caption or transcript formats at once.</li>
+        <li>Convert audio or video sources into transcripts or caption files.</li>
+        <li>Batch-process multiple files at once for editorial or delivery workflows.</li>
+        <li>Provide uniform export formats for NLEs, broadcasters, and OTT platforms.</li>
       </ul>
     </div>
 
     <div class="tooltip-section">
-      <span class="tooltip-subtitle">Quick workflow</span>
+      <span class="tooltip-subtitle">Workflow</span>
       <ul class="tooltip-list">
-        <li><strong>Input</strong> – pick your source media.</li>
-        <li><strong>Output</strong> – set destination folder.</li>
-        <li><strong>Engine &amp; Language</strong> – select ASR engine and language behavior.</li>
-        <li><strong>Output Formats</strong> – choose TXT, SRT, VTT, SCC, JSON.</li>
-        <li><strong>Summary</strong> – review the job description before running.</li>
+        <li><strong>1. Select Input</strong> – choose media files to process.</li>
+        <li><strong>2. Choose Engine</strong> – WhisperX, WhisperAPI, or Lead AI.</li>
+        <li><strong>3. Pick Language</strong> – force a specific language or let it auto-detect.</li>
+        <li><strong>4. Choose Outputs</strong> – TXT, SRT, VTT, SCC, JSON, Scripted, XML.</li>
+        <li><strong>5. Review Summary</strong> – confirm before running the job.</li>
       </ul>
     </div>
   </div>
@@ -883,12 +883,33 @@
 </div>
 <div class="tooltip" id="transcribe-engine-tooltip">
   <div class="tooltip-content">
-    <div class="tooltip-header">ENGINE &amp; LANGUAGE</div>
-    <ul class="tooltip-list">
-      <li>Select engine (Whisper, WhisperX, cloud engines).</li>
-      <li>Force language or allow auto-detect.</li>
-      <li>Adjust accuracy vs. speed mode.</li>
-    </ul>
+    <div class="tooltip-header">ENGINE SETTINGS</div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">Engine Types</span>
+      <ul class="tooltip-list">
+        <li><strong>WhisperX</strong> – high-accuracy timing alignment and stable output.</li>
+        <li><strong>WhisperAPI</strong> – offloads transcription to an external ASR provider.</li>
+        <li><strong>Lead AI</strong> – built-in fast engine optimized for editing workflows.</li>
+      </ul>
+    </div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">Language Handling</span>
+      <ul class="tooltip-list">
+        <li>Force a specific language or let detection run automatically.</li>
+        <li>Useful when audio mixes languages or requires strict output.</li>
+      </ul>
+    </div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">Accuracy Mode</span>
+      <ul class="tooltip-list">
+        <li><strong>Fast</strong> – quickest pass; lighter quality.</li>
+        <li><strong>Auto</strong> – balanced speed and accuracy.</li>
+        <li><strong>Accurate</strong> – slowest but highest fidelity output.</li>
+      </ul>
+    </div>
   </div>
 </div>
 </div>
