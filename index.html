@@ -472,7 +472,32 @@
 <line x1="12" x2="12" y1="8" y2="8"></line>
 </svg>
 </div>
-<div class="tooltip tooltip-bottom" id="transcode-overview-tooltip"></div>
+<div class="tooltip tooltip-bottom" id="transcode-overview-tooltip">
+  <div class="tooltip-content">
+    <div class="tooltip-header">TRANSCODE PANEL OVERVIEW</div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">What this panel is for</span>
+      <ul class="tooltip-list">
+        <li>Transcode camera masters or intermediates into new delivery formats.</li>
+        <li>Normalize resolution, frame rate, and pixel format.</li>
+        <li>Set audio codec, sample rate, channels, and bitrate.</li>
+        <li>Optionally verify output using metadata or SSIM/PSNR.</li>
+      </ul>
+    </div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">Quick workflow</span>
+      <ul class="tooltip-list">
+        <li><strong>Input</strong> – choose your source files.</li>
+        <li><strong>Output</strong> – pick destination and container.</li>
+        <li><strong>Video</strong> – select format, resolution, FPS, pixel format.</li>
+        <li><strong>Audio</strong> – configure codec, channels, bitrate.</li>
+        <li><strong>Verification</strong> – enable quality checks if needed.</li>
+      </ul>
+    </div>
+  </div>
+</div>
 </div>
 </div>
 <div id="transcode-lock-wrapper">
@@ -706,7 +731,18 @@
 </svg>
 </div>
 <!-- Transcode-specific tooltip ID -->
-<div class="tooltip" id="transcode-verification-tooltip"></div>
+<div class="tooltip" id="transcode-verification-tooltip">
+  <div class="tooltip-content">
+    <div class="tooltip-header">VERIFICATION METHODS</div>
+
+    <div class="tooltip-section">
+      <ul class="tooltip-list">
+        <li><strong>Duration / Frame</strong> – compares runtime, frame count, and basic metadata.</li>
+        <li><strong>SSIM / PSNR</strong> – performs visual and signal-based quality evaluation.</li>
+      </ul>
+    </div>
+  </div>
+</div>
 </div>
 </summary>
 <div class="checkbox-grid spaced-top">
@@ -784,17 +820,24 @@
 <div class="tooltip tooltip-bottom" id="transcribe-overview-tooltip">
   <div class="tooltip-content">
     <div class="tooltip-header">TRANSCRIBE PANEL OVERVIEW</div>
-    <div class="tooltip-body">
-      <p>
-        This panel batches audio/video files into text and caption deliverables.
-        Lead AE Assist does <strong>format routing</strong>, <strong>engine selection</strong>,
-        and <strong>basic QC</strong> for you.
-      </p>
-      <ul>
-        <li><strong>Engine &amp; Language</strong> – pick the transcription engine and language.</li>
-        <li><strong>Output Formats</strong> – choose TXT, SRT, VTT, SCC and JSON exports.</li>
-        <li><strong>Per-format options</strong> – tweak timecode, speaker tags, and caption style.</li>
-        <li><strong>Summary</strong> – see a plain-English description of the job before you run it.</li>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">What this panel is for</span>
+      <ul class="tooltip-list">
+        <li>Batch audio or video into text transcripts and caption files.</li>
+        <li>Handle format routing, engine selection, and basic QC.</li>
+        <li>Export multiple caption or transcript formats at once.</li>
+      </ul>
+    </div>
+
+    <div class="tooltip-section">
+      <span class="tooltip-subtitle">Quick workflow</span>
+      <ul class="tooltip-list">
+        <li><strong>Input</strong> – pick your source media.</li>
+        <li><strong>Output</strong> – set destination folder.</li>
+        <li><strong>Engine &amp; Language</strong> – select ASR engine and language behavior.</li>
+        <li><strong>Output Formats</strong> – choose TXT, SRT, VTT, SCC, JSON.</li>
+        <li><strong>Summary</strong> – review the job description before running.</li>
       </ul>
     </div>
   </div>
@@ -841,17 +884,11 @@
 <div class="tooltip" id="transcribe-engine-tooltip">
   <div class="tooltip-content">
     <div class="tooltip-header">ENGINE &amp; LANGUAGE</div>
-    <div class="tooltip-body">
-      <p>
-        Choose which ASR engine to use and how strict we should be about language and accuracy.
-      </p>
-      <ul>
-        <li><strong>Engine</strong> – cloud or local engines supported by your Lead AE install.</li>
-        <li><strong>Language</strong> – force a language or let the engine auto-detect.</li>
-        <li><strong>Accuracy mode</strong> – trade off speed vs. quality for long jobs.</li>
-        <li><strong>Confidence filter</strong> – drop words below the confidence threshold.</li>
-      </ul>
-    </div>
+    <ul class="tooltip-list">
+      <li>Select engine (Whisper, WhisperX, cloud engines).</li>
+      <li>Force language or allow auto-detect.</li>
+      <li>Adjust accuracy vs. speed mode.</li>
+    </ul>
   </div>
 </div>
 </div>
@@ -1616,14 +1653,11 @@
   <div class="tooltip-content">
     <div class="tooltip-header">LOG VIEWER OVERVIEW</div>
     <div class="tooltip-body">
-      <p>
-        This panel shows structured logs for Ingest, Transcode, Transcribe, and Adobe Automate.
-        It’s meant for <strong>troubleshooting</strong> and <strong>post-mortems</strong>, not for clients.
-      </p>
-      <ul>
-        <li><strong>Date / Tool filters</strong> – narrow logs to a window and workflow.</li>
-        <li><strong>Severity badges</strong> – quickly scan for warnings and failures.</li>
-        <li><strong>Export</strong> – dump visible logs as CSV, JSON, or text for support.</li>
+      <p>Review logs for Ingest, Transcode, Transcribe, and Automate workflows.</p>
+      <ul class="tooltip-list">
+        <li>Filter by date, tool, or severity.</li>
+        <li>Search log text.</li>
+        <li>Export as CSV, JSON, or TXT.</li>
       </ul>
     </div>
   </div>
