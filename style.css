@@ -1722,6 +1722,11 @@ select.compact {
   transform: rotate(360deg) scale(1.2);
 }
 
+/* Make overview tooltip icons visible on the dark top toolbar */
+#panel-toolbar .tooltip-container .icon {
+  color: #f9fafb;  /* light strokes so the "i" shows up */
+}
+
 .tooltip {
   visibility: hidden;
   width: max-content;
