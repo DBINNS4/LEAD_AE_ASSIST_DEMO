@@ -158,20 +158,24 @@
 <button data-i18n="testSelectedDrives" id="test-selected-drives"></button>
 </div>
 </div>
-<div class="status-log" id="drive-test-results"><span data-i18n="noDriveResults"></span></div>
-<!-- Speed Test controls row (Reset + inline loader + hamster) -->
+<div class="status-log" id="drive-test-results">
+  <span data-i18n="noDriveResults"></span>
+</div>
+
+<!-- Speed Test controls row (Reset + inline loader) -->
 <div class="field-group horizontal spaced-top" id="speedtest-controls-row">
-<button class="btn-danger" data-i18n="resetSpeedTest" id="reset-speedtest"></button>
-<div aria-live="polite" id="speedtest-loader-inline">
-<progress id="speedtest-progress" max="100" value="0"></progress>
-<output id="speedtest-progress-output"></output>
+  <button class="btn-danger" data-i18n="resetSpeedTest" id="reset-speedtest"></button>
+  <div aria-live="polite" id="speedtest-loader-inline">
+    <progress id="speedtest-progress" max="100" value="0"></progress>
+    <output id="speedtest-progress-output"></output>
+  </div>
 </div>
-<!-- Hamster, same structure/scale used in other panels -->
-<div aria-hidden="true" id="speedtest-job-status"></div>
-</div>
+
 <!-- Summary -->
 <h3><span data-i18n="summary"></span></h3>
-<div class="status-log" id="speedtest-summary"><span data-i18n="readyToTest"></span></div>
+<div class="status-log" id="speedtest-summary">
+  <span data-i18n="readyToTest"></span>
+</div>
 </div>
 </div><div class="panel-section" id="project-organizer">
 <div class="section">
