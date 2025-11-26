@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+
+<html lang="">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="default-src 'self' file:; connect-src 'self' http://127.0.0.1:32123 ws://127.0.0.1:32123; script-src 'self' 'unsafe-eval' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" http-equiv="Content-Security-Policy"/>
+<title>LEAD AE – ASSIST</title>
+<link href="style.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="app">
+<div id="titlebar">
+<!-- 🌙 Light/Dark Mode Toggle -->
+<div class="theme-toggle-left">
+<input class="l" id="theme-toggle" title="Toggle Light/Dark Mode" type="checkbox"/>
+</div>
+<div id="panel-toolbar-wrapper">
+<div id="panel-toolbar"></div>
+</div>
+</div>
+<div class="title-divider"></div>
+<div id="window-content">
+<!-- ====================
+           📚 Sidebar Navigation
+           ==================== -->
+<aside class="sidebar">
+<ul>
+<!-- 🔗 Panel Navigation Tabs -->
+
+
+
+
+
+
+
+
+
+<li class="tab lae-navbtn" data-i18n="speedTest" data-panel="speed-test">
+<span class="lae-navbtn__text">Speed Test</span>
+</li><li class="tab lae-navbtn" data-i18n="projectOrganizer" data-panel="project-organizer">
+<span class="lae-navbtn__text">Project Organizer</span>
+</li><li class="tab lae-navbtn" data-i18n="ingest" data-panel="ingest">
+<span class="lae-navbtn__text">Ingest</span>
+</li><li class="tab lae-navbtn" data-i18n="transcode" data-panel="transcode">
+<span class="lae-navbtn__text">Transcode</span>
+</li><li class="tab lae-navbtn" data-i18n="transcribe" data-panel="transcribe">
+<span class="lae-navbtn__text">Transcribe</span>
+</li><li class="tab lae-navbtn" data-i18n="adobeAutomate" data-panel="adobe-utilities">
+<span class="lae-navbtn__text">Adobe Automate</span>
+</li><li class="tab lae-navbtn" data-i18n="nleUtilities" data-panel="nle-utilities">
+<span class="lae-navbtn__text">NLE Utilities</span>
+</li><li class="tab lae-navbtn" data-i18n="logViewer" data-panel="log-viewer">
+<span class="lae-navbtn__text">Log Viewer</span>
+</li><li class="tab lae-navbtn" data-i18n="preferences" data-panel="preferences">
+<span class="lae-navbtn__text">Preferences</span>
+</li></ul>
+<div class="sidebar-logo">
+<a href="https://www.leadae.com" target="_blank">
+<img alt="LEAD AE Logo" src="images/lead_ae_logo.jpeg"/>
+</a>
+</div>
+</aside>
+<!-- ====================
+ 📋 Main Content Area
+ ==================== -->
+<main class="main-panel hidden">
+<!-- ==================== ADOBE AUTOMATE PANEL ==================== -->
+
+<!-- ==================== INGEST PANEL ==================== -->
+
+<!-- ====================
+   TRANSCODE PANEL
+==================== -->
+
+<!-- =========================
+     PROJECT ORGANIZER PANEL
+     ========================= -->
+
+<!-- =========================
+     NLE UTILITIES PANEL
+     ========================= -->
+
+<!-- ========================
+     PREFERENCES PANEL
+     ======================== -->
+
+<!-- =======================
+     LOG VIEWER PANEL
+     ======================= -->
+
+
+<!-- ==================== SPEED TEST PANEL ==================== -->
+
+<div class="panel-section hidden" id="speed-test">
+<div class="section">
+<div class="panel-toolbar-controls">
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="speed-test-overview-tooltip"></div>
+</div>
+</div>
+<!-- Network Test -->
+<h3><span data-i18n="networkTest"></span></h3>
+<div class="field-group horizontal">
+<button data-i18n="runNetworkTest" id="start-network-test"></button>
+</div>
+<div class="status-log spaced-bottom" id="network-test-results"><span data-i18n="noNetworkResults"></span></div>
+<!-- Drive Tests -->
+<div class="heading-with-tooltip">
+<h3><span data-i18n="driveTests"></span></h3>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip" id="speedtest-info-tooltip"></div>
+</div>
+</div>
+<div class="spaced-top" id="drive-tests">
+<div class="field-group horizontal">
+<button data-i18n="selectDrive1" id="select-drive-1"></button>
+<button data-i18n="selectDrive2" id="select-drive-2"></button>
+<button data-i18n="selectDrive3" id="select-drive-3"></button>
+</div>
+<div class="status-log" data-i18n="noDrivesSelected" id="selected-drive-paths"></div>
+<div class="video-grid-2col spaced-top">
+<div class="form-item">
+<label data-i18n="testSize" for="test-size">Test Size</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Select Test Size" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="test-size" name="test-size" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="mode" for="io-mode">Mode</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Select Mode" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="io-mode" name="io-mode" type="hidden"/>
+</div>
+</div>
+</div>
+<!-- Run Test Button Row -->
+<div class="field-group horizontal spaced-top">
+<button data-i18n="testSelectedDrives" id="test-selected-drives"></button>
+</div>
+</div>
+<div class="status-log" id="drive-test-results"><span data-i18n="noDriveResults"></span></div>
+<!-- Speed Test controls row (Reset + inline loader + hamster) -->
+<div class="field-group horizontal spaced-top" id="speedtest-controls-row">
+<button class="btn-danger" data-i18n="resetSpeedTest" id="reset-speedtest"></button>
+<div aria-live="polite" id="speedtest-loader-inline">
+<progress id="speedtest-progress" max="100" value="0"></progress>
+<output id="speedtest-progress-output"></output>
+</div>
+<!-- Hamster, same structure/scale used in other panels -->
+<div aria-hidden="true" id="speedtest-job-status"></div>
+</div>
+<!-- Summary -->
+<h3><span data-i18n="summary"></span></h3>
+<div class="status-log" id="speedtest-summary"><span data-i18n="readyToTest"></span></div>
+</div>
+</div><div class="panel-section" id="project-organizer">
+<div class="section">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="organizer" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="organizer-preset" name="organizer-preset" type="hidden"/>
+</div>
+<button data-i18n="saveConfig" id="organizer-save-config"></button>
+<button data-i18n="loadConfig" id="organizer-load-config"></button>
+<!-- 🔹 Project Organizer overview tooltip – SAME POSITION AS INGEST/TRANSCODE -->
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="project-organizer-overview-tooltip"></div>
+</div>
+</div>
+<div class="field-group">
+<label><input id="prepend-numbers" type="checkbox"><span data-i18n="prependNumbering"></span></input></label>
+</div>
+<!-- Folder Selection Panel -->
+<div class="field-group" id="folder-selection">
+<label data-i18n="dragFoldersToOrder"></label>
+<ul class="draggable-list" id="folder-list"></ul>
+</div>
+<!-- Custom Folder Input -->
+<div class="field-group">
+<input data-i18n="customFolderName" id="custom-folder-name" placeholder="" type="text">
+<button data-i18n="addCustomFolder" id="add-custom-folder"></button>
+<button data-i18n="addSubfolder" id="organizer-add-subfolder"></button>
+</input></div>
+<!-- Root Naming Rules -->
+<div class="field-group project-name">
+<label for="root-folder-name" style="font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem;"><span data-i18n="projectName"></span></label>
+<input data-i18n="rootFolderPlaceholder" id="root-folder-name" placeholder="" type="text">
+</input></div>
+<!-- Save Location Setup -->
+<div class="field-group">
+<button data-i18n="selectOutputLocation" id="select-output-location"></button>
+<input data-i18n="outputPath" id="output-location-path" placeholder="" readonly="" type="text">
+</input></div>
+<!-- Generate Buttons -->
+<div class="field-group">
+<button data-i18n="generateProjectFolders" id="generate-project-folders"></button>
+<button class="btn-danger" data-i18n="resetProjectOrganizer" id="reset-project-organizer"></button>
+</div>
+<!-- Folder Summary -->
+<h3><span data-i18n="summary"></span></h3>
+<div class="status-log" data-i18n="noStructureDefined" id="project-summary"></div>
+</div>
+</div><div class="panel-section" id="ingest">
+<div class="section">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="ingest" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="ingest-preset" name="ingest-preset" type="hidden"/>
+</div>
+<button data-i18n="save" id="ingest-save-config"></button>
+<button data-i18n="load" id="ingest-load-config"></button>
+<!-- Ingest panel overview tooltip (top-right, like Adobe Automate) -->
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="ingest-overview-tooltip"></div>
+</div>
+</div>
+<div id="ingest-lock-wrapper">
+<!-- Input -->
+<h3>Input</h3>
+<div class="field-group horizontal">
+<button data-i18n="selectSource" id="select-source"></button>
+<input data-i18n="noSourceSelected" id="source-path" placeholder="" readonly="" type="text">
+</input></div>
+<!-- Output -->
+<h3>Output</h3>
+<div class="field-group horizontal">
+<button data-i18n="selectDestination" id="select-destination"></button>
+<input data-i18n="noDestinationSelected" id="destination-path" placeholder="" readonly="" type="text">
+</input></div>
+<div class="field-group horizontal">
+<button data-i18n="selectBackup" id="select-backup"></button>
+<input data-i18n="noBackupSelected" id="backup-path" placeholder="" readonly="" type="text"/>
+</div>
+<!-- Output & Clone Options -->
+<div class="checkbox-grid">
+<label><input id="dualCopy" type="checkbox"/><span data-i18n="enableBackup"></span></label>
+<label><input id="autoFolder" type="checkbox"/><span data-i18n="autoCreateFolder"></span></label>
+<label><input id="enable-clone" type="checkbox"/><span>Clone Mode</span></label>
+</div>
+<!-- Clone Section (revealed when enabled) -->
+<div class="clone-options spaced-top" id="clone-options">
+<h3><span data-i18n="folderFilters"></span></h3>
+<div class="field-group horizontal">
+<input data-i18n="filterFoldersPlaceholder" id="clone-folder-filter" placeholder="" type="text"/>
+<label><input id="clone-select-all-folders" type="checkbox"/><span data-i18n="selectAll"></span></label>
+<label><input id="clone-show-file-count" type="checkbox"/><span data-i18n="showFileCount"></span></label>
+<!-- Clone Mode tooltip – same positioning style as Verification & Logging -->
+<div class="tooltip-container clone-mode-tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip" id="clone-mode-tooltip"></div>
+</div>
+</div>
+<div class="status-log folder-tree" id="clone-folder-tree"><span data-i18n="folderTreePlaceholder"></span></div>
+</div>
+<!-- File Handling Options -->
+<details>
+<summary><strong><span data-i18n="fileHandlingOptions"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="skip-duplicates" type="checkbox"/><span data-i18n="skipDuplicates"></span></label>
+<label><input id="flattenStructure" type="checkbox"/><span data-i18n="flattenStructure"></span></label>
+</div>
+<div class="field-group vertical-stack">
+<label data-i18n="includeExtensions" for="filter-include"></label>
+<input id="filter-include" placeholder=".mov,.mp4,.wav" type="text"/>
+<label data-i18n="excludeExtensions" for="filter-exclude"></label>
+<input id="filter-exclude" placeholder=".tmp,.db,.DS_Store" type="text"/>
+</div>
+</details>
+<details>
+<summary class="heading-with-tooltip">
+<span class="summary-label" data-i18n="verificationLogging"></span>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip" id="verification-logging-tooltip"></div>
+</div>
+</summary>
+<div class="checkbox-grid spaced-top">
+<label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Verification Method" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="checksum-method" name="checksum-method" type="hidden"/>
+</div>
+</label>
+<label>
+<input id="saveLog" type="checkbox">
+<span data-i18n="saveLog"></span>
+</input></label>
+</div>
+</details>
+<!-- Ingest Behavior -->
+<details data-webhook-section="">
+<summary><strong><span data-i18n="automationIntegration"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="enable-n8n" type="checkbox"><span data-i18n="webhook"></span></input></label>
+<label><input id="n8n-log" type="checkbox"/><span data-i18n="sendLog"></span></label>
+</div>
+<input data-i18n="webhookUrlPlaceholderSimple" id="n8n-url" placeholder="" type="text"/>
+</details>
+<!-- Ingest Behavior -->
+<details>
+<summary><strong><span data-i18n="ingestBehavior"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="ingest-parallel" type="checkbox"/><span data-i18n="parallelCopy"></span></label>
+<label><input id="ingest-auto-threads" type="checkbox"/><span data-i18n="autoThreads"></span></label>
+<label><input id="ingest-retry-failures" type="checkbox"/><span data-i18n="retryFailures"></span></label>
+</div>
+<div class="field-group horizontal">
+<label><strong data-i18n="threads"></strong></label>
+<span id="concurrency-value">3</span>
+<input id="concurrency-slider" max="10" min="1" type="range"/>
+</div>
+</details>
+<!-- Watch Mode -->
+<details>
+<summary><strong><span data-i18n="watchMode"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="enable-watch-mode" type="checkbox"/><span data-i18n="enableWatchMode"></span></label>
+</div>
+<span class="watch-state" id="ingest-watch-state"></span>
+</details>
+</div> <!-- end of ingest-lock-wrapper -->
+<textarea data-i18n="ingestNotes" id="notes" placeholder=""></textarea>
+<!-- Controls -->
+<div class="field-group adobe-controls-row" id="ingest-lock-controls">
+<button data-i18n="startIngest" id="start-ingest"></button>
+<button class="btn-danger" data-i18n="resetIngest" id="reset-ingest-fields"></button>
+<button class="btn-danger" data-i18n="cancelIngest" id="cancel-ingest"></button>
+<!-- Inline loader (same placement as Adobe Automate) -->
+<div id="ingest-loader-inline">
+<progress id="ingest-progress" max="100" style="display:none" value="0"></progress>
+<output for="ingest-progress" id="ingest-progress-output"></output>
+</div>
+<!-- Hamster hard-right -->
+<div id="ingest-job-status" style="display:none;">
+<div class="wheel-and-hamster"></div>
+</div>
+</div>
+<!-- Job Preview -->
+<h3><span data-i18n="summary"></span></h3>
+<textarea aria-label="Job Preview" class="status-log" id="ingest-job-preview-box" readonly="" rows="1"></textarea>
+</div>
+</div><div class="panel-section" id="transcode">
+<div class="section">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="transcode" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcode-preset" name="transcode-preset" type="hidden"/>
+</div>
+<button data-i18n="save" id="saveTranscodePreset"></button>
+<button data-i18n="load" id="loadTranscodePreset"></button>
+<!-- Transcode panel overview tooltip (top-right, like Ingest/Adobe) -->
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="transcode-overview-tooltip"></div>
+</div>
+</div>
+<div id="transcode-lock-wrapper">
+<!-- Input -->
+<h3>Input</h3>
+<div class="field-group">
+<button data-i18n="selectInputFiles" id="selectInputFiles"></button>
+<textarea data-i18n="noInputSelected" id="inputFiles" placeholder="" readonly="" rows="1"></textarea>
+</div>
+<div class="file-info-scroll">
+<div class="file-info-grid placeholder" id="transcode-file-info">
+<div class="file-info-grid-header">File</div>
+<div class="file-info-grid-header">Format</div>
+<div class="file-info-grid-header">Resolution</div>
+<div class="file-info-grid-header">FPS</div>
+<div class="file-info-grid-header">Audio</div>
+<div class="file-info-grid-header">Duration</div>
+</div>
+</div>
+<h3>Output</h3>
+<div class="field-group horizontal">
+<button data-i18n="selectOutput" id="selectOutput"></button>
+<input data-i18n="noOutputSelected" id="outputPath" placeholder="" readonly="" type="text">
+</input></div>
+<details>
+<summary>
+<strong><span data-i18n="videoSettings"></span></strong>
+</summary>
+<div class="checkbox-row">
+<label class="checkbox-label" for="transcode-match-source">
+<input id="transcode-match-source" type="checkbox">
+<span data-i18n="matchSource"></span>
+</input></label>
+</div>
+<div class="video-grid-3col">
+<!-- Column 1 -->
+<div class="form-item">
+<label data-i18n="outputFormat" for="outputFormat"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Output Format" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="outputFormat" name="outputFormat" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="containerFormat" for="containerFormat"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Container Format" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="containerFormat" name="containerFormat" type="hidden"/>
+</div>
+</div>
+<!-- Column 2 -->
+<div class="form-item">
+<label data-i18n="resolution" for="resolution"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Resolution" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="resolution" name="resolution" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="frameRate" for="frameRate"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Frame Rate" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="frameRate" name="frameRate" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="crf" for="crf"></label>
+<input class="compact" id="crf" placeholder="e.g. 23" type="number">
+</input></div>
+<!-- Column 3 -->
+<div class="form-item">
+<label data-i18n="pixelFormat" for="pixelFormat"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Pixel Format" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="pixelFormat" name="pixelFormat" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="colorRange" for="colorRange"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Color Range" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="colorRange" name="colorRange" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="fieldOrder" for="fieldOrder"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Field Order" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="fieldOrder" name="fieldOrder" type="hidden"/>
+</div>
+</div>
+</div>
+</details>
+<details>
+<summary><strong><span data-i18n="audioSettings"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="transcode-audio-only" type="checkbox"><span data-i18n="audioOnly"></span></input></label>
+<label><input id="normalizeAudio" type="checkbox"><span data-i18n="normalizeAudio"></span></input></label>
+</div>
+<div class="video-grid-3col">
+<div class="form-item">
+<label data-i18n="audioCodec" for="audioCodec"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Audio Codec" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="audioCodec" name="audioCodec" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="channels" for="channels"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Channels" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="channels" name="channels" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="sampleRate" for="sampleRate"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Sample Rate" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="sampleRate" name="sampleRate" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="audioBitrate" for="audioBitrate"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Audio Bitrate" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="audioBitrate" name="audioBitrate" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="audioDelay" for="audioDelay"></label>
+<input class="compact" id="audioDelay" placeholder="e.g. 50" type="number">
+</input></div>
+</div>
+</details>
+<details>
+<summary class="heading-with-tooltip">
+<span class="summary-label" data-i18n="verificationLogging"></span>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<!-- Transcode-specific tooltip ID -->
+<div class="tooltip" id="transcode-verification-tooltip"></div>
+</div>
+</summary>
+<div class="checkbox-grid spaced-top">
+<label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Verification Method" type="text"/>
+<ul class="value-list">
+<li data-value="metadata">Duration / Frame</li>
+<li data-value="ssim_psnr">SSIM / PSNR</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="transcode-verification-method" name="transcode-verification-method" type="hidden" value="metadata">
+</input></div>
+</label>
+<label>
+<input id="transcode-save-log" type="checkbox">
+<span data-i18n="transcodeSaveLog"></span>
+</input></label>
+</div>
+</details>
+<details data-webhook-section="">
+<summary><strong><span data-i18n="automationIntegration"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="transcode-enable-n8n" type="checkbox"><span data-i18n="webhook"></span></input></label>
+<label><input id="transcode-n8n-log" type="checkbox"><span data-i18n="sendLog"></span></input></label>
+</div>
+<input data-i18n="webhookUrlPlaceholderSimple" id="transcode-n8n-url" placeholder="" type="text">
+</input></details>
+<details id="transcode-watch-wrapper">
+<summary><strong><span data-i18n="watchMode"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="transcode-watch-mode" type="checkbox"><span data-i18n="transcodeWatchMode"></span></input></label>
+<span class="watch-state" id="transcode-watch-state"></span>
+</div>
+</details>
+<textarea data-i18n="transcodeNotes" id="transcode-notes" placeholder=""></textarea>
+<div class="field-group adobe-controls-row spaced-top" id="transcode-controls-row">
+<button data-i18n="startTranscode" id="startTranscode"></button>
+<button class="btn-danger" data-i18n="resetTranscode" id="resetTranscode"></button>
+<button class="btn-danger" data-i18n="cancelTranscode" id="cancelTranscode"></button>
+<div id="transcode-loader-inline">
+<progress id="transcode-progress" max="100" style="display:none" value="0"></progress>
+<output for="transcode-progress" id="transcode-progress-output"></output>
+</div>
+<div id="transcode-job-status" style="display:none;">
+<div class="wheel-and-hamster"></div>
+</div>
+</div>
+</div> <!-- end of transcode-lock-wrapper -->
+<!-- Job Preview (matches Ingest/Adobe pattern; always shows all option states) -->
+<h3><span data-i18n="summary"></span></h3>
+<textarea aria-label="Job Preview" class="status-log" id="transcode-job-preview-box" readonly="" rows="1"></textarea>
+</div>
+</div><div class="panel-section" id="transcribe">
+<div class="section">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="transcribe" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-preset" name="transcribe-preset" type="hidden"/>
+</div>
+<button data-i18n="save" id="transcribe-save-config"></button>
+<button data-i18n="load" id="transcribe-load-config"></button>
+<!-- 🔹 Transcribe overview tooltip – NEXT TO PRESETS, NOT ON THE FAR RIGHT -->
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="transcribe-overview-tooltip"></div>
+</div>
+<!-- Spacer pushes ONLY the editor button to the far right -->
+<span class="toolbar-flex-spacer"></span>
+<button id="open-subtitle-editor" type="button">Open Editor…</button>
+</div>
+<div id="transcribe-lock-wrapper">
+<!-- Input -->
+<h3>Input</h3>
+<div class="field-group">
+<button data-i18n="transcribeSelectFiles" id="transcribe-select-files"></button>
+<textarea data-i18n="transcribeNoSource" id="transcribe-files" placeholder="" readonly="" rows="1"></textarea>
+</div>
+<div class="file-info-scroll">
+<div class="file-info-grid placeholder" id="transcribe-file-info">
+<div class="file-info-grid-header">File</div>
+<div class="file-info-grid-header">Format</div>
+<div class="file-info-grid-header">Resolution</div>
+<div class="file-info-grid-header">FPS</div>
+<div class="file-info-grid-header">Audio</div>
+<div class="file-info-grid-header">Duration</div>
+</div>
+</div>
+<!-- Output -->
+<h3>Output</h3>
+<div class="field-group">
+<button data-i18n="transcribeOutputSelect" id="transcribe-output-select"></button>
+<input data-i18n="transcribeNoDestination" id="transcribe-output-path" placeholder="" readonly="" type="text">
+</input></div>
+<!-- Engine Settings -->
+<div class="heading-with-tooltip">
+<h3><span data-i18n="engineSettings"></span></h3>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip" id="transcribe-engine-tooltip"></div>
+</div>
+</div>
+<div class="video-grid-4col">
+<div class="form-item">
+<label data-i18n="engine" for="transcribe-engine"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Engine" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-engine" name="transcribe-engine" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="language" for="transcribe-language"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Language" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-language" name="transcribe-language" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="accuracy" for="transcribe-accuracy-mode"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Accuracy" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-accuracy-mode" name="transcribe-accuracy-mode" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label data-i18n="confidence" for="transcribe-confidence"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Confidence" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-confidence" name="transcribe-confidence" type="hidden"/>
+</div>
+</div>
+</div>
+<div class="field-group horizontal">
+<label><input id="transcribe-offline" type="checkbox"><span data-i18n="offlineOnly"></span></input></label>
+<label><input id="transcribe-allow-fallback" type="checkbox"><span data-i18n="enableFallback"></span></input></label>
+</div>
+<!-- 2. Output Format Presets -->
+<h3><span data-i18n="Output Formats"></span></h3>
+<!-- Global timecode controls deprecated in favor of per-format mini panels.
+         Kept in DOM as internal defaults only, not shown to the user. -->
+<div class="field-group horizontal timecode-toggle-row" style="display:none;">
+<label><input id="out-timecodes" type="checkbox"><span data-i18n="includeTimecodes"></span></input></label>
+</div>
+<div class="video-grid-3col" id="timecode-fields" style="display:none;">
+<div class="form-item">
+<label for="transcribe-timecode-style">Timecode Format
+        </label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Timecode Format" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-timecode-style" name="transcribe-timecode-style" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="transcribe-fps">Frame Rate Override (FPS)
+        </label>
+<input id="transcribe-fps" max="120" min="10" placeholder="Auto" step="0.01" type="number">
+</input></div>
+<div class="form-item">
+<label data-i18n="startTimecodeOffset" for="transcribe-tc-start"></label>
+<input id="transcribe-tc-start" placeholder="01:00:00:00" type="text">
+</input></div>
+</div>
+<pre class="status-log" data-i18n="selectFormatPreview" id="sample-preview"></pre>
+<div class="field-group">
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Output Formats" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="transcribe-output-formats" name="transcribe-output-formats" type="hidden"/>
+</div>
+</div>
+<!-- ⬇️ NEW: Plain Text (.txt) — format-specific panel -->
+<details class="format-options" data-format="txt" id="fmt-txt" open="" style="display:none;">
+<summary><strong>Plain Text (.txt)</strong></summary>
+<div class="checkbox-grid fmt-txt-checkbox-row">
+<label class="checkbox-label">
+<input id="fmt-txt-include-timecodes" type="checkbox"/>
+          Include Timecodes
+        </label>
+<label class="checkbox-label">
+<input id="fmt-txt-group-by-speaker" type="checkbox"/>
+          Group by Speaker
+        </label>
+<label class="checkbox-label">
+<input id="fmt-txt-include-speaker-names" type="checkbox"/>
+          Include Speaker Names
+        </label>
+</div>
+<div class="video-grid-3col">
+<div class="form-item">
+<label for="fmt-txt-timecode-format">Timecode Format</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Timecode Format" type="text"/>
+<ul class="value-list">
+<li data-value="ndf">NDF — HH:MM:SS:FF</li>
+<li data-value="df">DF — HH:MM:SS;FF</li>
+<li data-value="ms">Milliseconds — HH:MM:SS,mmm</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-txt-timecode-format" name="fmt-txt-timecode-format" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="fmt-txt-fps">Frame Rate Override (FPS)</label>
+<input id="fmt-txt-fps" max="120" min="1" placeholder="Auto" step="0.001" type="number">
+</input></div>
+<div class="form-item">
+<label for="fmt-txt-tc-start">Start Timecode Offset</label>
+<input id="fmt-txt-tc-start" placeholder="01:00:00:00" type="text" value="01:00:00:00">
+</input></div>
+<div class="form-item">
+<label for="fmt-txt-timestamp-placement">Timestamp Placement</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Timestamp Placement" type="text"/>
+<ul class="value-list">
+<li data-value="start_end">Start–End</li>
+<li data-value="start">Start only</li>
+<li data-value="every_line">Every line</li>
+<li data-value="none">None</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-txt-timestamp-placement" name="fmt-txt-timestamp-placement" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="fmt-txt-speaker-style">Speaker Label Style</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Speaker Label Style" type="text"/>
+<ul class="value-list">
+<li data-value="title">Title Case</li>
+<li data-value="caps">ALL CAPS</li>
+<li data-value="raw">Raw</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-txt-speaker-style" name="fmt-txt-speaker-style" type="hidden"/>
+</div>
+</div>
+</div>
+</details>
+<!-- Final JSON (wrapped) — format-specific panel -->
+<details class="format-options" data-format="finalJson" id="fmt-finaljson" open="" style="display:none;">
+<summary><strong>Final JSON (wrapped)</strong></summary>
+<div class="video-grid-3col">
+<div class="form-item">
+<label for="fmt-finaljson-timecode-format">Timecode Format</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Timecode Format" type="text"/>
+<ul class="value-list">
+<li data-value="ndf">NDF — HH:MM:SS:FF</li>
+<li data-value="df">DF — HH:MM:SS;FF</li>
+<li data-value="ms">Milliseconds — HH:MM:SS,mmm</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-finaljson-timecode-format" name="fmt-finaljson-timecode-format" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="fmt-finaljson-fps">Frame Rate Override (FPS)</label>
+<input id="fmt-finaljson-fps" max="120" min="1" placeholder="Auto" step="0.001" type="number">
+</input></div>
+<div class="form-item">
+<label for="fmt-finaljson-tc-start">Start Timecode Offset</label>
+<input id="fmt-finaljson-tc-start" placeholder="01:00:00:00" type="text">
+</input></div>
+<div class="form-item">
+<label class="checkbox-label">
+<input checked="" id="fmt-finaljson-pretty" type="checkbox"/>
+            Pretty print (2-space)
+          </label>
+</div>
+</div>
+</details>
+<!-- SubRip (.srt) — no per-format mini-panel.
+         SRT now behaves like XML: only the main "Output Formats" dropdown controls whether it’s generated. -->
+<!-- WebVTT (.vtt) — format-specific panel -->
+<details class="format-options" data-format="vtt" id="fmt-vtt" open="" style="display:none;">
+<summary><strong>WebVTT (.vtt)</strong></summary>
+<div class="video-grid-3col align-end">
+<!-- Include Speaker Names -->
+<div class="form-item">
+<label class="checkbox-label nowrap">
+<input id="fmt-vtt-include-speaker-names" type="checkbox"/>
+            Include Speaker Names
+          </label>
+</div>
+<!-- Speaker Label Style dropdown (NO visible header label) -->
+<div class="form-item">
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Speaker Label Style" type="text"/>
+<ul class="value-list">
+<li data-value="title">Title Case</li>
+<li data-value="caps">ALL CAPS</li>
+<li data-value="raw">Raw</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-vtt-speaker-style" name="fmt-vtt-speaker-style" type="hidden"/>
+</div>
+</div>
+<!-- VTT style metadata toggle (per-format) -->
+<div class="form-item">
+<label>
+<input id="fmt-vtt-include-style" type="checkbox">
+            Include WebVTT style metadata
+          </input></label>
+</div>
+</div>
+<!-- WebVTT subtitle shaping options (moved from Subtitle Options) -->
+<div class="video-grid-3col">
+<div class="form-item">
+<label data-i18n="maxCharsPerLine" for="sub-max-chars"></label>
+<input id="sub-max-chars" type="number" value="42">
+</input></div>
+<div class="form-item">
+<label data-i18n="maxLinesPerBlock" for="sub-max-lines"></label>
+<input id="sub-max-lines" type="number" value="2">
+</input></div>
+<div class="form-item">
+<label data-i18n="maxSubtitleDuration" for="sub-max-duration"></label>
+<input id="sub-max-duration" step="0.1" type="number" value="6.0">
+</input></div>
+</div>
+</details>
+<!-- Scenarist SCC (.scc) — format-specific mini panel -->
+<details class="format-options" data-format="scc" id="fmt-scc" open="" style="display:none;">
+<summary><strong>Scenarist Closed Captions (.scc)</strong></summary>
+<!-- Shaping (SCC defaults) -->
+<div class="video-grid-3col">
+<div class="form-item">
+<label for="fmt-scc-max-chars">Max characters per line</label>
+<input id="fmt-scc-max-chars" type="number" value="32">
+</input></div>
+<div class="form-item">
+<label for="fmt-scc-max-lines">Max lines per subtitle block</label>
+<input id="fmt-scc-max-lines" type="number" value="2">
+</input></div>
+<div class="form-item">
+<label for="fmt-scc-max-duration">Max subtitle duration (sec.)</label>
+<input id="fmt-scc-max-duration" step="0.1" type="number" value="6.0">
+</input></div>
+</div>
+<!-- Header font comment (family + size) -->
+<div class="video-grid-3col align-end">
+<div class="form-item">
+<label for="fmt-scc-font-name">Font family</label>
+<input id="fmt-scc-font-name" placeholder="Helvetica" type="text" value="Helvetica">
+</input></div>
+<div class="form-item">
+<label for="fmt-scc-font-size">Font size (px)</label>
+<input id="fmt-scc-font-size" type="number" value="24">
+</input></div>
+<div class="form-item">
+<em style="opacity:.8;">(Added as “// FONT: Family Size px” in the SCC header)</em>
+</div>
+</div>
+</details>
+<!-- Scripted (CSV/DOCX) — format-specific panel -->
+<details class="format-options" data-format="script" id="fmt-script" open="" style="display:none;">
+<summary><strong>Scripted (CSV/DOCX)</strong></summary>
+<!-- Row 1: core Scripted checkboxes -->
+<div class="video-grid-3col align-end">
+<div class="form-item">
+<label class="checkbox-label nowrap">
+<input id="fmt-script-include-timecodes" type="checkbox"/>
+            Include Timecodes
+          </label>
+</div>
+<div class="form-item">
+<label class="checkbox-label nowrap">
+<input id="fmt-script-include-speaker-names" type="checkbox"/>
+            Include Speaker Names
+          </label>
+</div>
+<div class="form-item">
+<label class="checkbox-label nowrap">
+<input id="fmt-script-group-by-speaker" type="checkbox"/>
+            Group by Speaker
+          </label>
+</div>
+</div>
+<!-- Row 2: Timestamp placement + speaker label style + export type -->
+<div class="video-grid-3col">
+<div class="form-item">
+<label for="fmt-script-timestamp-placement">Timestamp Placement</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Timestamp Placement" type="text"/>
+<ul class="value-list">
+<li data-value="start_end">Start–End</li>
+<li data-value="start">Start only</li>
+<li data-value="every_line">Every line</li>
+<li data-value="none">None</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-script-timestamp-placement" name="fmt-script-timestamp-placement" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="fmt-script-speaker-style">Speaker Label Style</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Speaker Label Style" type="text"/>
+<ul class="value-list">
+<li data-value="title">Title Case</li>
+<li data-value="caps">ALL CAPS</li>
+<li data-value="raw">Raw</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-script-speaker-style" name="fmt-script-speaker-style" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="fmt-script-export">Export Type</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Export Type" type="text"/>
+<ul class="value-list">
+<li data-value="csv">CSV (FCP7-style)</li>
+<li data-value="docx">DOCX (Word)</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-script-export" name="fmt-script-export" type="hidden"/>
+</div>
+</div>
+</div>
+<!-- Row 3: Timecode specifics scoped to Scripted -->
+<div class="video-grid-3col">
+<div class="form-item">
+<label for="fmt-script-timecode-format">Timecode Format</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Timecode Format" type="text"/>
+<ul class="value-list">
+<li data-value="ndf">NDF — HH:MM:SS:FF</li>
+<li data-value="df">DF — HH:MM:SS;FF</li>
+<li data-value="ms">Milliseconds — HH:MM:SS,mmm</li>
+</ul>
+<span class="dropdown-arrow"></span>
+<input id="fmt-script-timecode-format" name="fmt-script-timecode-format" type="hidden"/>
+</div>
+</div>
+<div class="form-item">
+<label for="fmt-script-fps">Frame Rate Override (FPS)</label>
+<input id="fmt-script-fps" max="120" min="1" placeholder="Auto" step="0.001" type="number">
+</input></div>
+<div class="form-item">
+<label for="fmt-script-tc-start">Start Timecode Offset</label>
+<input id="fmt-script-tc-start" placeholder="01:00:00:00" type="text" value="01:00:00:00">
+</input></div>
+</div>
+</details>
+<!-- SCC Alignment + CC Channel (side-by-side with headers) -->
+<div class="video-grid-2col" id="scc-alignchan-wrap" style="display:none;">
+<div class="form-item" id="scc-align-row">
+<label for="scc-alignment">Caption Alignment</label>
+<div class="dropdown-wrapper dropdown-display compact">
+<input class="chosen-value" placeholder="Alignment" type="text">
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="scc-alignment" name="scc-alignment" type="hidden">
+</input></input></div>
+</div>
+<div class="form-item" id="scc-channel-row">
+<label for="scc-channel">CC Channel</label>
+<div class="dropdown-wrapper dropdown-display compact">
+<input class="chosen-value" placeholder="CC Channel" type="text">
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="scc-channel" name="scc-channel" type="hidden">
+</input></input></div>
+</div>
+</div>
+<!-- SCC-only: Row policy (row pair) -->
+<div class="field-group horizontal" id="scc-row-policy-row" style="display:none;">
+<label for="scc-row-policy">Row policy</label>
+<div class="dropdown-wrapper dropdown-display compact">
+<input class="chosen-value" placeholder="Row policy" type="text">
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="scc-row-policy" name="scc-row-policy" type="hidden">
+</input></input></div>
+</div>
+<!-- (Removed legacy SCC rows: mode, roll-up clear, EOF/EDM, legacy font comment, XML sidecar) -->
+<!-- 3. Enhancements -->
+<details>
+<summary><strong><span data-i18n="enhancements"></span></strong></summary>
+<div class="checkbox-grid spaced-top enhancements-grid">
+<!-- Audio Analysis -->
+<label class="enhancement-heading">Audio Analysis</label>
+<label><input id="transcribe-use-tracks" type="checkbox"><span data-i18n="useAltAudioTrack"></span></input></label>
+<label><input id="acc-boost" type="checkbox"><span data-i18n="boostClarity"></span></input></label>
+<!-- Text Enhancement -->
+<label class="enhancement-heading">Text Enhancement</label>
+<label><input id="acc-auto-punct" type="checkbox"><span data-i18n="autoPunctuate"></span></input></label>
+<label><input id="acc-smart-cap" type="checkbox"><span data-i18n="smartCapitalization"></span></input></label>
+<label><input id="acc-spellcheck" type="checkbox"><span data-i18n="spellcheck"></span></input></label>
+<!-- Safety Filters -->
+<label class="enhancement-heading">Safety Filters</label>
+<label><input id="acc-redact" type="checkbox"><span data-i18n="redactExplicit"></span></input></label>
+<!-- Content Cleanup -->
+<label class="enhancement-heading">Content Cleanup</label>
+<label>
+<input id="transcribe-filter-nonspeech" type="checkbox">
+<span data-i18n="removeNonSpeech"></span>
+</input></label>
+<label>
+<input id="transcribe-remove-fillers" type="checkbox">
+<span data-i18n="removeFillers"></span>
+</input></label>
+<label><input id="transcribe-rename" type="checkbox"><span data-i18n="renameMatchSource"></span></input></label>
+<!-- Metadata / Export -->
+<label class="enhancement-heading">Metadata / Export</label>
+<label>
+<input id="transcribe-embed" type="checkbox">
+<span data-i18n="embedInMetadata"></span>
+</input></label>
+</div>
+</details>
+<!-- 4. Translate -->
+<details>
+<summary><strong><span data-i18n="translate"></span></strong></summary>
+<div class="field-group horizontal">
+<label><input id="translate-enable" type="checkbox"><span data-i18n="translateOutput"></span></input></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Language" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="translate-target" name="translate-target" type="hidden"/>
+</div>
+<label><input id="translate-side-by-side" type="checkbox"><span data-i18n="translateSideBySide"></span></input></label>
+</div>
+</details>
+<!-- Automation / Webhook Integration -->
+<details data-webhook-section="">
+<summary><strong><span data-i18n="automationIntegration"></span></strong></summary>
+<div class="field-group">
+<label><input id="transcribe-enable-n8n" type="checkbox"><span data-i18n="transcribeEnableN8N"></span></input></label>
+<input data-i18n="transcribeN8NUrl" id="transcribe-n8n-url" placeholder="" type="text">
+<label><input id="transcribe-n8n-log" type="checkbox"><span data-i18n="transcribeN8NLog"></span></input></label>
+</input></div>
+</details>
+<!-- Watch Mode -->
+<details>
+<summary><strong><span data-i18n="watchMode"></span></strong></summary>
+<div class="field-group">
+<label><input id="transcribe-watch-mode" type="checkbox"><span data-i18n="enableWatchMode"></span></input></label>
+<span class="watch-state" id="transcribe-watch-state"></span>
+</div>
+</details>
+<!-- 5. File Output & Post-Actions -->
+<!-- Summary Preview -->
+<pre class="whitespace-pre-wrap p-2 border rounded h-64 overflow-y-auto bg-black text-white font-mono text-sm" id="live-transcript-output"></pre>
+<textarea data-i18n="transcribeNotes" id="transcribe-notes" placeholder=""></textarea>
+<!-- Controls -->
+<div class="field-group horizontal" id="transcribe-controls-row">
+<button data-i18n="startTranscribe" id="start-transcribe"></button>
+<button class="btn-danger" data-i18n="resetTranscribe" id="reset-transcribe"></button>
+<button class="btn-danger" data-i18n="cancelTranscribe" id="cancel-transcribe"></button>
+<!-- Inline status text (replaces progress bar) -->
+<div aria-live="polite" id="transcribe-loader-inline" style="display:none">
+<span class="eta-inline" id="transcribe-status-text">transcribing...</span>
+</div>
+<!-- Hamster wheel, right-aligned (same structure as other panels) -->
+<div id="transcribe-job-status" style="display:none;">
+<div class="wheel-and-hamster"></div>
+</div>
+</div>
+</div> <!-- end of transcribe-lock-wrapper -->
+<!-- Summary -->
+<h3><span data-i18n="summary"></span></h3>
+<div class="status-log" id="transcribe-summary"></div>
+<!-- (progress bar removed; indeterminate spinner + text is shown inline above) -->
+</div>
+</div><div class="panel-section" id="adobe-utilities">
+<div class="section">
+<div id="adobe-lock-wrapper">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="adobe-utilities" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="adobe-utilities-preset" name="adobe-utilities-preset" type="hidden"/>
+</div>
+<button data-i18n="save" id="save-config"></button>
+<button data-i18n="load" id="load-config"></button>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="automation-requirements-tooltip"></div>
+</div>
+<div class="reconnect-toolbar-button">
+<div class="container">
+<input id="reconnect-checkbox" type="checkbox">
+<label aria-label="Reconnect" class="button" for="reconnect-checkbox" title="Reconnect">
+<span class="icon">
+<svg aria-hidden="true" focusable="false" viewbox="0 0 24 24">
+<path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 6.27h-2.02A6 6 0 1 1 12 6a5.96 5.96 0 0 1 4.24 1.76L14 10h6V4l-2.35 2.35Z"></path>
+</svg>
+</span>
+</label>
+</input></div>
+</div>
+</div>
+<!-- Input -->
+<h3>Input</h3>
+<div class="field-group horizontal">
+<button data-i18n="selectSource" id="adobe-select-source"></button>
+<textarea data-i18n="noSourceSelected" id="adobe-source-path" placeholder="" readonly="" rows="1"></textarea>
+</div>
+<!-- ▶ File & Metadata Grid (new) -->
+<div class="file-info-scroll">
+<div class="file-info-grid placeholder" id="adobe-file-info">
+<div class="file-info-grid-header">File</div>
+<div class="file-info-grid-header">Format</div>
+<div class="file-info-grid-header">Resolution</div>
+<div class="file-info-grid-header">FPS</div>
+<div class="file-info-grid-header">Audio</div>
+<div class="file-info-grid-header">Duration</div>
+</div>
+</div>
+<!-- Output -->
+<h3>Output</h3>
+<div class="field-group horizontal">
+<button data-i18n="selectDestination" id="adobe-select-dest"></button>
+<input data-i18n="noDestinationSelected" id="adobe-dest-path" placeholder="" readonly="" type="text">
+</input></div>
+<!-- Import Options -->
+<details>
+<summary><strong><span data-i18n="importOptions"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="adobe-import-premiere" type="checkbox"/><span data-i18n="importIntoPremiere"></span></label>
+<label><input id="adobe-generate-proxies" type="checkbox"/><span data-i18n="generateProxies"></span></label>
+<label><input id="adobe-create-bins" type="checkbox"/><span data-i18n="createPremiereBins"></span></label>
+</div>
+<!-- Proxy Settings -->
+<div class="heading-with-tooltip">
+<h3 data-i18n="proxySettings"></h3>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip" id="proxy-settings-tooltip"></div>
+</div>
+</div>
+<div class="proxy-settings-wrapper">
+<div class="field-group horizontal" id="adobe-proxy-dest-row" style="display: none;">
+<button data-i18n="selectProxyDestination" id="adobe-select-proxy-dest"></button>
+<input data-i18n="noProxyDestinationSelected" id="adobe-proxy-dest-path" placeholder="" readonly="" type="text"/>
+</div>
+<div class="field-group" id="adobe-proxy-preset-wrapper" style="display: none;">
+<div class="dropdown-wrapper full-width">
+<div class="dropdown-display">
+<input class="chosen-value" data-i18n="selectProxyPreset" placeholder="" type="text"/>
+<span class="dropdown-arrow"></span>
+</div>
+<ul class="value-list"></ul>
+<input id="adobe-proxy-preset" name="adobe-proxy-preset" type="hidden"/>
+</div>
+<div class="field-group horizontal" id="adobe-proxy-preset-controls">
+<button data-i18n="loadPreset" id="load-proxy-preset"></button>
+<button data-i18n="refresh" id="refresh-proxy-presets"></button>
+</div>
+</div>
+</div>
+<!-- Unassigned Files -->
+<h3 data-i18n="unassignedFiles"></h3>
+<div class="field-group" id="source-file-selection">
+<label data-i18n="dragFilesIntoBins"></label>
+<ul class="draggable-list" id="source-file-list"></ul>
+</div>
+<!-- Bin Setup -->
+<h3 data-i18n="binSetup"></h3>
+<div class="field-group" id="adobe-bin-selection">
+<label data-i18n="dragBinsToOrder"></label>
+<ul class="draggable-list" id="adobe-bin-list"></ul>
+</div>
+<div class="field-group">
+<input data-i18n="newBinName" id="adobe-folder-name" placeholder="" type="text">
+<button data-i18n="addBin" id="add-folder"></button>
+<button data-i18n="addSubBin" id="add-subfolder"></button>
+</input></div>
+</details>
+<details>
+<summary class="heading-with-tooltip">
+<span class="summary-label" data-i18n="verificationLogging"></span>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip" id="verification-logging-tooltip"></div>
+</div>
+</summary>
+<div class="checkbox-grid spaced-top">
+<label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Verification Method" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="adobe-checksum-method" name="adobe-checksum-method" type="hidden"/>
+</div>
+</label>
+<label>
+<input id="adobe-save-log" type="checkbox">
+<span data-i18n="saveLog"></span>
+</input></label>
+</div>
+</details>
+<details data-webhook-section="">
+<summary><strong><span data-i18n="automationIntegration"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="adobe-enable-n8n" type="checkbox"><span data-i18n="webhook"></span></input></label>
+<label><input id="adobe-n8n-log" type="checkbox"><span data-i18n="sendLog"></span></input></label>
+</div>
+<input data-i18n="webhookUrlPlaceholderSimple" id="adobe-n8n-url" placeholder="" type="text"/>
+</details>
+<details>
+<summary><strong><span data-i18n="ingestBehavior"></span></strong></summary>
+<div class="checkbox-grid spaced-top">
+<label><input id="adobe-parallel" type="checkbox"/><span data-i18n="parallelCopy"></span></label>
+<label><input id="adobe-auto-threads" type="checkbox"/><span data-i18n="autoThreads"></span></label>
+<label><input id="adobe-retry-failures" type="checkbox"/><span data-i18n="retryFailures"></span></label>
+</div>
+<div class="field-group horizontal">
+<label><strong data-i18n="threads"></strong></label>
+<span id="adobe-concurrency-value">3</span>
+<input id="adobe-concurrency-slider" max="10" min="1" type="range"/>
+</div>
+</details>
+<!-- Ingest Controls -->
+<textarea data-i18n="adobeAutomateNotes" id="adobe-notes" placeholder=""></textarea>
+<div class="field-group adobe-controls-row" id="adobe-lock-controls">
+<button data-i18n="automate" id="start-adobe-utilities"></button>
+<button class="btn-danger" data-i18n="reset" id="reset-utilities"></button>
+<button class="btn-danger" data-i18n="cancel" id="cancel-adobe-utilities">Cancel</button>
+<!-- Progress bar + percent -->
+<div id="loader-inline">
+<progress id="adobe-progress" max="100" value="0"></progress>
+<output for="adobe-progress"></output>
+</div>
+<!-- ✅ Hamster Wheel (right aligned) -->
+<div id="cep-job-status" style="display:none;">
+<div class="wheel-and-hamster"></div>
+</div>
+</div>
+</div>
+<ul aria-live="polite" id="cep-task-list"></ul>
+<h3><span data-i18n="summary"></span></h3>
+<textarea aria-label="Job Preview" class="status-log" id="job-preview-box" readonly="" rows="1"></textarea>
+</div>
+</div><div class="panel-section" id="nle-utilities">
+<div class="section">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="nle" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="nle-preset" name="nle-preset" type="hidden"/>
+</div>
+<button data-i18n="saveConfig" id="nle-save-config"></button>
+<button data-i18n="loadConfig" id="nle-load-config"></button>
+<!-- 🔹 NLE Utilities overview tooltip (IN ROW, SAME POSITION AS OTHERS) -->
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="nle-overview-tooltip"></div>
+</div>
+</div>
+<!-- Avid Utilities -->
+<details>
+<summary><strong><span data-i18n="avidUtilities"></span></strong></summary>
+<!-- Folder Selection -->
+<div class="field-group">
+<button data-i18n="avidSelectFolder" id="avid-select-folder"></button>
+<input data-i18n="noAvidFolderSelected" id="avid-folder-path" placeholder="" readonly="" type="text">
+</input></div>
+<!-- Primary Buttons -->
+<div class="field-group">
+<button class="btn-danger" data-i18n="avidDeleteDb" id="avid-delete-db" title="Folders should follow 'Avid MediaFiles/MXF' structure"></button>
+<button class="btn-danger" data-i18n="avidResetSite" id="avid-reset-site"></button>
+<button class="btn-danger" data-i18n="avidResetUser" id="avid-reset-user"></button>
+</div>
+<!-- Secondary Action -->
+<div class="field-group">
+<button data-i18n="avidRebuildDb" id="avid-rebuild-db" title="Folders should follow 'Avid MediaFiles/MXF' structure"></button>
+</div>
+<!-- Shared Checkboxes -->
+<div class="field-group">
+<label><input id="avid-scan-subfolders" type="checkbox"><span data-i18n="avidScanSubfolders"></span></input></label>
+<label><input id="avid-backup-settings" type="checkbox"><span data-i18n="avidBackupSettings"></span></input></label>
+</div>
+<!-- Summary Log -->
+<div class="status-log" data-i18n="avidSummary" id="avid-summary"></div>
+</details>
+<!-- Adobe Automate -->
+<details>
+<summary><strong><span data-i18n="adobeUtilities"></span></strong></summary>
+<div class="field-group">
+<button data-i18n="adobeSelectFolder" id="adobe-select-folder"></button>
+<input data-i18n="noAdobeFolderSelected" id="adobe-folder-path" placeholder="" readonly="" type="text">
+</input></div>
+<!-- Cache and Autosave Controls -->
+<div class="field-group">
+<button class="btn-danger" data-i18n="adobeClearCache" id="adobe-clear-cache"></button>
+<button class="btn-danger" data-i18n="adobeDeleteAutosaves" id="adobe-delete-autosaves"></button>
+<button class="btn-danger" data-i18n="adobeRemovePreviews" id="adobe-remove-previews"></button>
+</div>
+<!-- Cleanup Filters -->
+<div class="field-group">
+<label><input id="adobe-skip-recent" type="checkbox"><span data-i18n="adobeSkipRecent"></span></input></label>
+<input data-i18n="adobeAgeDays" id="adobe-age-days" min="1" placeholder="" type="number">
+</input></div>
+<div class="status-log" data-i18n="adobeSummary" id="adobe-summary"></div>
+</details>
+<!-- Full Panel Reset Button -->
+<div class="field-group spaced-top">
+<button class="btn-danger" data-i18n="resetNleUtilities" id="reset-nle-utilities"></button>
+</div>
+</div>
+</div><div class="panel-section" id="log-viewer">
+<div class="section">
+<div class="panel-toolbar-controls log-viewer-toolbar">
+<div class="log-viewer-header-text">
+        Review past tasks, errors,<br/>
+        and export log summaries.
+      </div>
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="log-viewer-overview-tooltip"></div>
+</div>
+</div>
+<!-- Log Filters -->
+<h3><span data-i18n="logFilters"></span></h3>
+<div class="field-group">
+<label data-i18n="viewByDate"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="View by Date" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="view-by-date" name="view-by-date" type="hidden"/>
+</div>
+<input id="log-start-date" type="date">
+<input id="log-end-date" type="date">
+<label data-i18n="viewByTool"></label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="View by Tool" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="view-by-tool" name="view-by-tool" type="hidden"/>
+</div>
+<label><input id="show-errors-only" type="checkbox"><span data-i18n="onlyErrorsWarnings"></span></input></label>
+</input></input></div>
+<!-- Log Search -->
+<h3>Log Display</h3>
+<div class="field-group">
+<input data-i18n="logSearch" id="log-search" placeholder="" type="text">
+<label><input id="include-system-logs" type="checkbox"><span data-i18n="includeSystemLogs"></span></input></label>
+</input></div>
+<!-- Live Log Output -->
+<div class="status-log" data-i18n="logsWillAppearHere" id="live-log-view"></div>
+<div class="field-group horizontal spaced-top">
+<button data-i18n="expandTaskDetails" id="expand-task-details"></button>
+<button class="btn-danger" data-i18n="resetViewer" id="reset-log-viewer"></button>
+</div>
+<!-- Export Section -->
+<h3><span data-i18n="exportLogs"></span></h3>
+<div class="field-group">
+<label>Export Format</label>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" placeholder="Export Format" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="export-format" name="export-format" type="hidden"/>
+</div>
+</div>
+<div class="field-group">
+<button data-i18n="exportFolder" id="select-export-folder"></button>
+<input id="export-folder-path" placeholder="Export folder path" readonly="" type="text">
+</input></div>
+<button data-i18n="exportLogs" id="export-log-btn"></button>
+<div class="toast" data-i18n="exportComplete" id="log-toast"></div>
+</div>
+</div><div class="panel-section" id="preferences">
+<div class="section">
+<div class="panel-toolbar-controls">
+<button class="delete-preset-btn" data-panel="prefs" disabled="" title="Delete Preset">🗑️</button>
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="presetsPlaceholder" placeholder="" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="prefs-preset" name="prefs-preset" type="hidden"/>
+</div>
+<button id="prefs-save-config">Save</button>
+<button id="prefs-load-config">Load</button>
+<!-- 🔹 Preferences overview tooltip -->
+<div class="tooltip-container">
+<div class="icon">
+<svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12" y1="8" y2="8"></line>
+</svg>
+</div>
+<div class="tooltip tooltip-bottom" id="preferences-overview-tooltip"></div>
+</div>
+</div>
+<!-- General Preferences -->
+<h3>General</h3>
+<div class="field-group checkbox-grid">
+<label><input id="system-notifications" type="checkbox"><span data-i18n="enableSystemNotifications"></span></input></label>
+<label><input id="offline-mode" type="checkbox"><span data-i18n="enableOfflineMode"></span></input></label>
+</div>
+<h3 data-i18n="themeAppearance"></h3>
+<div class="field-group horizontal">
+<!-- Theme -->
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="themePlaceholder" placeholder="Light/Dark" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="theme-select" name="theme-select" type="hidden"/>
+</div>
+<!-- Language -->
+<div class="dropdown-wrapper dropdown-display">
+<input class="chosen-value" data-i18n="languagePlaceholder" placeholder="Language" type="text"/>
+<ul class="value-list"></ul>
+<span class="dropdown-arrow"></span>
+<input id="language-select" name="language-select" type="hidden"/>
+</div>
+</div>
+<!-- AI Settings -->
+<h3 data-i18n="aiSettings"></h3>
+<div class="field-group" id="api-key-field">
+<label data-i18n="aiApiKey" for="ai-api-key"></label>
+<input id="ai-api-key" placeholder="Enter your API key here..." type="text">
+</input></div>
+<!-- Webhooks & Integration -->
+<div id="webhook-section">
+<h3 data-i18n="webhooksIntegration"></h3>
+<div class="field-group">
+<input data-i18n="webhookUrlPlaceholder" id="webhook-url" placeholder="Webhook URL (e.g., https://your.api/hook)" type="text">
+</input></div>
+<div class="field-group checkbox-grid">
+<label><input id="webhook-logging" type="checkbox"><span data-i18n="enableWebhookLogging"></span></input></label>
+<label><input id="webhook-only-fail" type="checkbox"><span data-i18n="sendOnlyOnFailure"></span></input></label>
+</div>
+</div>
+<div class="field-group">
+<button class="btn-danger" id="reset-preferences">Reset Preferences</button>
+</div>
+<div class="field-group preferences-footer">
+<span id="app-version"></span>
+<a class="report-bug-link" data-i18n="reportBug" href="https://www.leadae.com/bug-report" target="_blank">Report Bug</a>
+</div>
+</div>
+<div class="toast" data-i18n="preferencesSaved" id="prefs-toast"></div>
+</div></main>
+</div><!-- window-content -->
+</div><!-- app -->
+<!-- ⚙️ App Logic Script -->
+<!-- Load CSInterface only inside CEP -->
+<script>
+    (function () {
+      if (window.__adobe_cep__) {
+        var s = document.createElement('script');
+        s.src = 'resources/cep/extensions/com.leadae.panel/CSInterface.js';
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+<script>
+    // Demo-safe Electron bridge + watchUtils stubs for running outside the real app.
+    (function () {
+      if (!window.electron) {
+        const syncNoop = () => {};
+        const asyncNoop = async () => null;
+
+        window.electron = {
+          // Paths & filesystem
+          resolvePath: function () {
+            return Array.from(arguments).filter(Boolean).join('/');
+          },
+          joinPath: function () {
+            return Array.from(arguments).filter(Boolean).join('/');
+          },
+          basename: function (p) {
+            if (!p) return '';
+            const parts = String(p).split(/[/\\]/);
+            return parts[parts.length - 1] || '';
+          },
+          extname: function (p) {
+            if (!p) return '';
+            const base = String(p).split(/[/\\]/).pop() || '';
+            const idx = base.lastIndexOf('.');
+            return idx >= 0 ? base.slice(idx) : '';
+          },
+          mkdir: syncNoop,
+          readdir: function () { return []; },
+          fileExists: function () { return false; },
+          stat: asyncNoop,
+          statSync: function () { return {}; },
+
+          // Text / log IO
+          readTextFile: function () { return '{}'; },
+          writeTextFile: syncNoop,
+          readLogFiles: function () { return []; },
+
+          // Dialogs / OS integration
+          selectFiles: asyncNoop,
+          selectFolder: asyncNoop,
+          selectFolderOrFiles: asyncNoop,
+          saveFile: asyncNoop,
+          openFile: asyncNoop,
+
+          // Media helpers
+          execFFmpeg: async () => ({ code: 0, stdout: '', stderr: '' }),
+          ffprobeJson: async () => ({}),
+          getSourceMetadata: async () => ({}),
+          validateCodexInput: async () => ({ ok: true, message: 'demo-only' }),
+          getDiskInfo: async () => [],
+
+          // Ingest / clone
+          cancelIngest: asyncNoop,
+
+          // App paths
+          userDataPath: '',
+          appDir: '',
+          ffmpegPath: '',
+
+          // Generic IPC-style invoke
+          invoke: asyncNoop
+        };
+      }
+
+      if (!window.watchUtils) {
+        window.watchUtils = {
+          startWatch: asyncNoop,
+          stopWatch: asyncNoop
+        };
+      }
+    })();
+  </script>
+<script src="./node_modules/i18next/dist/umd/i18next.min.js"></script>
+<script src="./node_modules/i18next-browser-languagedetector/dist/umd/i18nextBrowserLanguageDetector.min.js"></script>
+<script src="i18n.js"></script>
+<script defer="" src="utils/dropdown.js"></script>
+<script defer="" src="renderer.clone-utils.js"></script>
+<script defer="" src="utils/watch-mode.js"></script>
+<script defer="" src="renderer.js"></script>
+<script>
+  // Theme and initial panel setup; pop-out bootstrap handled in renderer.js to avoid duplicate loads.
+  document.addEventListener('DOMContentLoaded', () => {
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      document.body.classList.toggle('dark-mode', storedTheme === 'dark');
+    }
+
+    const isEditorWin = new URLSearchParams(location.search).get('win') === 'subtitle-editor';
+    if (!isEditorWin) {
+      document.querySelectorAll('.panel-section').forEach(panel => panel.classList.add('hidden'));
+      window.electron?.send?.('ui:set-collapsed', true);
+    }
+  });
+  </script>
+<!-- ⬇️ NEW: Format-scope logic for Plain Text (.txt) -->
+<script>
+  (function () {
+    function parseSelectedFormats() {
+      const hidden = document.getElementById('transcribe-output-formats');
+      if (!hidden) return [];
+      const raw = hidden.value?.trim();
+      if (!raw) return [];
+      try {
+        // Support either CSV or JSON array, depending on dropdown implementation
+        if (raw.startsWith('[')) return JSON.parse(raw).map(String);
+      } catch (_) {}
+      return raw.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    function show(el, on) { if (el) el.style.display = on ? '' : 'none'; }
+
+    function updateTxtPanel() {
+      const formats = parseSelectedFormats();
+      const txtSelected = formats.some(f => f === 'txt' || f === '.txt' || f === 'plain_text');
+      const finalJsonSelected = formats.some(f => f === 'finalJson');
+      const scriptedSelected = formats.some(f => f === 'script');
+      const sccSelected = formats.some(f => f === 'scc' || f === '.scc');
+
+      // Show/hide the TXT-specific mini-panel
+      show(document.getElementById('fmt-txt'), txtSelected);
+
+      // Show/hide the SRT-specific mini-panel
+      const srtSelected = formats.some(f => f === 'srt' || f === '.srt');
+      show(document.getElementById('fmt-srt'), srtSelected);
+
+      // Show/hide the VTT-specific mini-panel
+      const vttSelected = formats.some(f => f === 'vtt' || f === '.vtt');
+      show(document.getElementById('fmt-vtt'), vttSelected);
+
+      // Show/hide the SCC-specific mini-panel
+      show(document.getElementById('fmt-scc'), sccSelected);
+
+      // Show/hide the Final JSON mini-panel
+      show(document.getElementById('fmt-finaljson'), finalJsonSelected);
+
+      // Show/hide the Scripted-specific mini-panel
+      show(document.getElementById('fmt-script'), scriptedSelected);
+
+    }
+
+    // Wire up listeners after DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const hidden = document.getElementById('transcribe-output-formats');
+      ['change', 'input', 'dropdown:change'].forEach(ev => hidden?.addEventListener(ev, updateTxtPanel));
+      updateTxtPanel();
+    });
+  })();
+  </script>
+</body>
+</html>
