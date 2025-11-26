@@ -92,7 +92,7 @@
     `;
   }
 
-  const verTooltip = document.getElementById('verification-logging-tooltip');
+  const verTooltip = document.querySelector('#adobe-utilities #verification-logging-tooltip');
   if (verTooltip) {
     verTooltip.innerHTML = `
       <div class="tooltip-content">
@@ -2086,70 +2086,12 @@ Proxy Attachment Rules:
     return cfg;
   }
 
-  el.startBtn?.addEventListener('click', async () => {
-    const raw = gatherConfig();
-    const config = await normalizeJobConfig(raw);
-
-    if (!Array.isArray(config.sources) || config.sources.length === 0) {
-      const message = 'No Source Files Selected';
-      setUILog(message, { isError: true });
-      alert(`❌ ${message}`);
-      return;
-    }
-
-    // 🧩 Simplified logic — let backend handle import + proxy sequencing.
-    // Never send premiereImportOnly from the renderer.
-    if (config.premiereImportOnly) {
-      delete config.premiereImportOnly;
-    }
-    debugLog('⚙️ premiereImportOnly removed — backend controls import sequence.');
-
-    try {
-      const jobId = await ipc?.invoke?.('queue-add-adobe', { config });
-      if (!jobId) {
-        const message = 'Failed to queue Adobe Automate job.';
-        setUILog(`❌ ${message}`, { isError: true });
-        alert(`❌ ${message}`);
-        return;
-      }
-      __adobeJobCompleted = false; // starting a new job
-      currentJobId = jobId;
-      clearFinalized(currentJobKeyFrom({ id: jobId }));
-      currentJobStage = 'copy';
-      state.currentJobId = currentJobId;
-      state.currentJobStage = currentJobStage;
-      setAdobeAutomateControlsDisabled(true);
-      if (el.cancelBtn) el.cancelBtn.disabled = false;
-      setUILog(`🚀 Adobe Automate job started (ID: ${jobId})`);
-
-      // ✅ Keep everything visible during the job — don’t reset until the end
-      if (el.jobPreviewBox) {
-        delete el.jobPreviewBox.dataset.joblogVisible;
-      }
-    } catch (err) {
-      alert(`❌ ${err.message}`);
-    }
+  el.startBtn?.addEventListener('click', () => {
+    // DEMO: Automate button is visual-only (hover/press). No job is queued.
   });
 
-  el.cancelBtn?.addEventListener('click', async () => {
-    if (!currentJobId) return;
-    const confirmed = confirm('Cancel the current Adobe Automate job?');
-    if (!confirmed) return;
-
-    try {
-      const res = await ipc?.invoke?.('queue-cancel-job', currentJobId);
-      const logMessage = typeof res === 'string' && res.trim() ? res : 'Cancel requested.';
-      setUILog(`🛑 ${logMessage}`);
-      // 🛑 Stop the hamster/progress immediately; we'll show the final sticky log on the cancelled event
-      resetAdobeAutomatePanelUI();
-      currentJobId = null;
-      currentJobStage = null;
-      state.currentJobId = currentJobId;
-      state.currentJobStage = currentJobStage;
-      if (el.cancelBtn) el.cancelBtn.disabled = true;
-    } catch (err) {
-      setUILog(`❌ Cancel failed: ${err.message}`);
-    }
+  el.cancelBtn?.addEventListener('click', () => {
+    // DEMO: Cancel button is visual-only (hover/press). No cancel logic.
   });
 
   ipc?.on('premiere-import-media', (_e, paths) => {
