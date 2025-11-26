@@ -3,86 +3,13 @@
 const watchUtils = window.watchUtils;
 const presetDir = window.electron.resolvePath('config', 'presets', 'ingest');
 
-let currentJobId = null;
 const ingestPreviewEl = document.getElementById('ingest-job-preview-box');
-
-// Build the hamster DOM structure if missing (same structure used in Adobe Automate)
-function ensureHamsterStructure(root) {
-  if (!root) return;
-  if (root.querySelector('.wheel')) return;
-  root.innerHTML = `
-    <div class="wheel"></div>
-    <div class="hamster">
-      <div class="hamster__body">
-        <div class="hamster__head">
-          <div class="hamster__ear"></div>
-          <div class="hamster__eye"></div>
-          <div class="hamster__nose"></div>
-        </div>
-        <div class="hamster__limb hamster__limb--fr"></div>
-        <div class="hamster__limb hamster__limb--fl"></div>
-        <div class="hamster__limb hamster__limb--br"></div>
-        <div class="hamster__limb hamster__limb--bl"></div>
-        <div class="hamster__tail"></div>
-      </div>
-    </div>
-    <div class="spoke"></div>
-  `;
-}
-
-function showIngestHamster() {
-  const status = document.getElementById('ingest-job-status');
-  if (!status) return;
-  let wheel = status.querySelector('.wheel-and-hamster');
-  if (!wheel) {
-    wheel = document.createElement('div');
-    wheel.className = 'wheel-and-hamster';
-    status.appendChild(wheel);
-  }
-  ensureHamsterStructure(wheel);
-  status.style.display = 'block';
-  status.dataset.jobActive = 'true';
-}
-
-function hideIngestHamster() {
-  const status = document.getElementById('ingest-job-status');
-  if (!status) return;
-  delete status.dataset.jobActive;
-  status.style.display = 'none';
-  status.querySelector('.wheel-and-hamster')?.remove();
-}
-
-function ensureEtaInline() {
-  const host = document.getElementById('ingest-loader-inline');
-  if (!host) return null;
-  let eta = document.getElementById('ingest-eta-inline');
-  if (!eta) {
-    eta = document.createElement('span');
-    eta.id = 'ingest-eta-inline';
-    eta.className = 'eta-inline';
-    host.appendChild(eta);
-  }
-  return eta;
-}
 
 function resetIngestProgressUI() {
   const bar = document.getElementById('ingest-progress');
   const out = document.getElementById('ingest-progress-output');
   if (bar) { bar.value = 0; bar.style.display = 'none'; }
   if (out) out.value = '';
-  const eta = document.getElementById('ingest-eta-inline');
-  if (eta) eta.textContent = '';
-  hideIngestHamster();
-}
-
-async function calculateIngestBytes(cfg) {
-  const res = await (window.ipc ?? window.electron).invoke('calculate-ingest-bytes', cfg);
-  return {
-    total: res?.total ?? 0,
-    map: {},
-    fileCount: res?.fileCount ?? 0,
-    folderCount: res?.folderCount ?? 0
-  };
 }
 
 function autoResizeTextArea(el) {
@@ -153,17 +80,7 @@ async function updateIngestJobPreview() {
   lines.push(`n8n webhook: ${cfg.enableN8N ? (cfg.n8nUrl || '(no URL)') : 'off'}`);
   if (cfg.notes?.trim()) lines.push(`Notes: ${cfg.notes.trim()}`);
 
-  try {
-    if (cfg.cloneMode && window.cloneUtils?.calculateCloneBytes) {
-      const res = await window.cloneUtils.calculateCloneBytes(cfg);
-      const files = res?.fileCount ?? res?.count ?? 0;
-      const folders = res?.folderCount ?? 0;
-      lines.push(`Items: ${files} files, ${folders} folders`);
-    } else if (typeof calculateIngestBytes === 'function') {
-      const { fileCount = 0, folderCount = 0 } = await calculateIngestBytes(cfg);
-      lines.push(`Items: ${fileCount} files, ${folderCount} folders`); // Removed size line for cleaner UI
-    }
-  } catch {}
+  // Demo mode: skip backend size calculations for ingest/clone previews.
 
   ingestPreviewEl.value = lines.join('\n');
   autoResizeTextArea(ingestPreviewEl);
@@ -358,22 +275,7 @@ if (showCount) {
       return;
     }
 
-    try {
-      const cfg = gatherIngestConfig();
-      if (!cfg || !cfg.cloneMode) {
-        updateIngestJobPreview();
-        return;
-      }
-      if (!window.cloneUtils?.calculateCloneBytes) {
-        updateIngestJobPreview();
-        return;
-      }
-      await window.cloneUtils.calculateCloneBytes(cfg);
-      updateIngestJobPreview();
-    } catch (err) {
-      console.error('Failed to calculate clone bytes', err);
-      updateIngestJobPreview();
-    }
+    updateIngestJobPreview();
   });
 }
 
@@ -563,68 +465,9 @@ ingestElements.backupBtn?.addEventListener('click', async () => {
 // ===============================
 // ▶️ Start Ingest Task
 // ===============================
-ingestElements.startBtn?.addEventListener('click', async () => {
-  const isWatch = document.getElementById('enable-watch-mode')?.checked;
-
-  const cfg = gatherIngestConfig();
-  logIngest(`Final clone config selectedFolders: ${cfg.selectedFolders}`);
-  logIngest(`Final clone config foldersOnly: ${cfg.foldersOnly || []}`);
-  if (cfg.cloneMode && (!Array.isArray(cfg.selectedFolders) || cfg.selectedFolders.length === 0)) {
-    const warn = '⚠️ Select at least one folder to clone.';
-    logIngest(warn, { isError: true });
-    if (ingestElements.logOutput) ingestElements.logOutput.textContent = warn;
-    return;
-  }
-
-  const panelLabel = cfg.cloneMode ? 'Clone' : 'Ingest';
-  let total = 0;
-  let map = {};
-  if (cfg.cloneMode) {
-    const stats = await window.cloneUtils.calculateCloneBytes(cfg);
-    total = stats.total;
-  } else {
-    ({ total, map } = await calculateIngestBytes(cfg));
-  }
-  const panel = cfg.cloneMode ? 'clone' : 'ingest';
-  const job = {
-    config: cfg,
-    expectedCopyBytes: total,
-    expectedBackupBytes: cfg.dualCopy ? total : 0,
-    fileSizeMap: cfg.cloneMode ? {} : map
-  };
-
-  if (isWatch) {
-    const result = await watchUtils.startWatch(panel, cfg);
-    sendIngestLog?.(result);
-    setIngestControlsDisabled(true);
-    ingestElements.cancelBtn.disabled = false;
-    return;
-  }
-
-  const queueMsg = `🚀 Queuing ${panelLabel.toLowerCase()} job...`;
-  logIngest(queueMsg);
-  if (ingestElements.logOutput) {
-    ingestElements.logOutput.textContent = queueMsg;
-  }
-  setIngestControlsDisabled(true);
-  try {
-    currentJobId = await ipc.invoke('queue-add-ingest', job);
-    // 🔧 Start processing immediately (no UI lag)
-    await ipc.invoke('queue-start');
-    const queuedMsg = `🗳️ ${panelLabel} job queued.`;
-    logIngest(queuedMsg);
-    if (ingestElements.logOutput) {
-      ingestElements.logOutput.textContent = queuedMsg;
-    }
-  } catch (err) {
-    const errMsg = `❌ Queue error: ${err.message}`;
-    logIngest(errMsg, { isError: true });
-    if (ingestElements.logOutput) {
-      ingestElements.logOutput.textContent = errMsg;
-    }
-  }
-
-  ingestElements.cancelBtn.disabled = false;
+ingestElements.startBtn?.addEventListener('click', () => {
+  // DEMO MODE — Start Ingest is visual-only.
+  return;
 });
 
 
@@ -655,42 +498,9 @@ if (ipc?.on) {
   });
 }
 
-ingestElements.cancelBtn?.addEventListener('click', async () => {
-  if (ingestElements.cancelBtn.textContent.includes('Stop Watching')) {
-    const panel = ingestElements.enableClone?.checked ? 'clone' : 'ingest';
-    await watchUtils.stopWatch(panel);
-    const result = await window.electron.cancelIngest?.();
-    sendIngestLog(`🛑 Watch Mode stopped and ${panel} cancelled.`);
-    if (result) sendIngestLog(result);
-
-    setIngestControlsDisabled(false);
-    ingestElements.startBtn.disabled = false;
-    ingestElements.cancelBtn.disabled = true;
-    ingestElements.startBtn.textContent = 'Start';
-    ingestElements.cancelBtn.textContent = 'Cancel';
-    ingestElements.watchModeToggle.checked = false;
-    ingestElements.watchModeToggle.dispatchEvent(new Event('change'));
-    return;
-  }
-
-  const confirmCancel = window.confirm("⚠️ Are you sure you want to cancel the ingest?");
-  if (!confirmCancel) return;
-
-  logIngest('🛑 Cancel requested...');
-  if (ingestElements.logOutput) {
-    ingestElements.logOutput.textContent += '\n🛑 Cancel requested...';
-  }
-  try {
-    await ipc.invoke('queue-cancel-job', currentJobId);
-    currentJobId = null;
-    resetIngestFields();
-  } catch (err) {
-    const errMsg = `❌ Cancel error: ${err.message}`;
-    logIngest(errMsg, { isError: true });
-    if (ingestElements.logOutput) {
-      ingestElements.logOutput.textContent += `\n❌ Cancel error: ${err.message}`;
-    }
-  }
+ingestElements.cancelBtn?.addEventListener('click', () => {
+  // DEMO MODE — Cancel Ingest is visual-only.
+  return;
 });
 
 
@@ -1157,86 +967,6 @@ if (typeof ipc !== 'undefined' && ipc.on) {
       }
     });
 
-  ipc.on('queue-job-start', (_e, job) => {
-    if (job.panel !== 'ingest') return;
-    const bar = document.getElementById('ingest-progress');
-    const out = document.getElementById('ingest-progress-output');
-    if (bar) { bar.value = 0; bar.style.display = 'block'; }
-    if (out) out.value = '';
-    ensureEtaInline();
-    showIngestHamster();
-  });
-
-  ipc.on('queue-job-progress', (_event, payload) => {
-    if (payload.panel !== 'ingest') return;
-    const bar = document.getElementById('ingest-progress');
-    const out = document.getElementById('ingest-progress-output');
-    if (!bar || !out) return;
-
-    if (typeof payload.percent === 'number') {
-      const isWatchMode = ingestElements.watchModeToggle?.checked;
-      const pct = isWatchMode && typeof payload.filePercent === 'number'
-        ? payload.filePercent
-        : payload.percent;
-
-      bar.style.display = pct >= 100 ? 'none' : 'block';
-      bar.value = Math.max(0, Math.min(100, pct));
-      out.value = pct >= 100 ? '' : Math.round(pct);
-
-      const etaEl = ensureEtaInline();
-      if (etaEl) {
-        const showEta = !isWatchMode && pct < 100 && payload.eta;
-        etaEl.textContent = showEta ? ` • ETA ${payload.eta}` : '';
-      }
-
-    }
-
-    showIngestHamster();
-
-    if (payload.file && payload.status?.copied) {
-      logIngest(`✅ Copied ${payload.file}`);
-    }
-  });
-  ipc.on('queue-job-complete', (_e, job) => {
-    if (job.panel !== 'ingest') return;
-    currentJobId = null;
-    const bar = document.getElementById('ingest-progress');
-    const out = document.getElementById('ingest-progress-output');
-    if (bar) { bar.value = 100; bar.style.display = 'none'; }
-    if (out) out.value = '';
-    const eta = document.getElementById('ingest-eta-inline');
-    if (eta) eta.textContent = '';
-    hideIngestHamster();
-    const isWatchMode = ingestElements.watchModeToggle?.checked;
-    if (!isWatchMode) {
-      setIngestControlsDisabled(false);
-    } else {
-      ingestElements.cancelBtn.disabled = false;
-    }
-  });
-  ipc.on('queue-job-failed', (_e, job) => {
-    if (job.panel !== 'ingest') return;
-    currentJobId = null;
-    resetIngestProgressUI();
-    const isWatchMode = ingestElements.watchModeToggle?.checked;
-    if (!isWatchMode) {
-      setIngestControlsDisabled(false);
-    } else {
-      ingestElements.cancelBtn.disabled = false;
-    }
-  });
-  ipc.on('queue-job-cancelled', (_e, job) => {
-    if (job.panel !== 'ingest') return;
-    currentJobId = null;
-    resetIngestProgressUI();
-    const isWatchMode = ingestElements.watchModeToggle?.checked;
-    if (!isWatchMode) {
-      setIngestControlsDisabled(false);
-    } else {
-      ingestElements.cancelBtn.disabled = false;
-    }
-    resetIngestFields();
-  });
 }
 
 if (typeof module !== 'undefined') {
