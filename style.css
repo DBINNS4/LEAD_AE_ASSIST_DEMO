@@ -1197,7 +1197,6 @@ code {
   box-sizing: border-box;
   flex-shrink: 0;
   height: 100%;       /* fill window-content height */
-  max-height: 100vh;  /* never exceed screen height */
 
   display: flex;
   flex-direction: column;
