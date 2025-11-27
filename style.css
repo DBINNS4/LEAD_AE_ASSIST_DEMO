@@ -59,8 +59,7 @@ h3,
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: auto;
+  height: 100vh;
   position: relative;
 }
 
