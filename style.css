@@ -41,17 +41,27 @@ body {
   overflow-x: hidden;
 }
 
-/* Always scaled 50% in this build */
+/* Tablet build: scale app 50% but keep a framed window */
 html,
 body {
-  width: 200%;
-  height: 200%;
-  overflow: auto;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;          /* no scrolling past the window edge */
 }
 
 #app {
+  /* Make the app logically 2x the viewport so 0.5 scale fills the screen */
+  width: 200vw;
+  height: 200vh;
+
   transform: scale(0.5);
   transform-origin: top left;
+
+  /* Add the missing borders */
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  box-sizing: border-box;
 }
 
 h1,
@@ -72,7 +82,7 @@ h3,
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 200vh;
   position: relative;
 }
 
