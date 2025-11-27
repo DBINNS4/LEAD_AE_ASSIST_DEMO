@@ -2023,5 +2023,17 @@
     });
   })();
   </script>
+<script>
+  // Report the page height to a parent iframe so it can auto-resize.
+  (function () {
+    function sendHeight() {
+      const height = document.documentElement.scrollHeight;
+      window.parent?.postMessage({ type: 'lead-ae-demo-resize', height }, '*');
+    }
+
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+  })();
+</script>
 </body>
 </html>
