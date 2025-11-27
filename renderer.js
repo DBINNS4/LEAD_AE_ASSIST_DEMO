@@ -744,4 +744,3 @@ document.addEventListener('DOMContentLoaded', () => {
     broadcast(newTheme);
   });
 });
-

@@ -41,6 +41,19 @@ body {
   overflow-x: hidden;
 }
 
+/* Always scaled 50% in this build */
+html,
+body {
+  width: 200%;
+  height: 200%;
+  overflow: auto;
+}
+
+#app {
+  transform: scale(0.5);
+  transform-origin: top left;
+}
+
 h1,
 h2,
 h3,
