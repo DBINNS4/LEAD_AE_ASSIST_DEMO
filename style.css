@@ -621,6 +621,7 @@ textarea {
   background-color: #ffffff;
   padding: var(--space-4);
   border-radius: 0;
+  border: 1px solid #ccc;      /* 🔧 add this line */
   font-family: var(--font-mono);
   font-size: 0.9rem;
   margin-top: var(--space-4);
