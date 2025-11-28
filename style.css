@@ -377,10 +377,13 @@ body.home-active .main-panel {
 
 /* Show video when no panel is open */
 #home-video-wrapper {
+  flex: 1;                         /* allow it to fill vertical space */
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: center;             /* vertical center */
+  justify-content: center;         /* horizontal center */
   background: #000;
+  padding: 0;                      /* remove the old padding */
+  min-height: 100%;                /* ensure correct height */
 }
 
 /* Hide video when a panel is open */
@@ -3563,14 +3566,10 @@ body.dark-mode .subtitle-editor #subtitle-editor-status.text-error {
 }
 
 /* Home video resizing */
-#home-video-wrapper {
-  padding: 2rem 0;                 /* optional breathing room */
-}
-
 #home-video {
-  width: 70%;                      /* shrink from 100% to 70% */
-  height: auto;                    /* let aspect ratio stay natural */
-  max-width: 900px;                /* optional upper cap */
-  border-radius: 8px;              /* optional polish */
-  object-fit: contain !important;  /* avoid cropping */
+  width: 70%;
+  height: auto;
+  max-width: 900px;
+  border-radius: 8px;
+  object-fit: contain !important;
 }
