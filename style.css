@@ -354,10 +354,6 @@ body.dark-mode .main-panel {
   display: none;
 }
 
-#app:not(.panel-open) .main-panel {
-  display: none !important;
-}
-
 /* #app:not(.panel-open) .sidebar {
   width: 100%;
 } */
@@ -377,6 +373,19 @@ body.dark-mode .main-panel {
 body.home-active .main-panel {
   padding: 0;
   background-color: #000;
+}
+
+/* Show video when no panel is open */
+#home-video-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+/* Hide video when a panel is open */
+#app.panel-open #home-video-wrapper {
+  display: none;
 }
 
 .panel-section {

@@ -315,8 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Hide all panels initially
   panels.forEach(p => p.classList.add("hidden"));
-  document.body.classList.remove('home-active');
-  mainPanel?.classList.add('hidden');
+  document.body.classList.add('home-active');
+  mainPanel?.classList.remove('hidden');
 
   updateToolbar('ingest');
 
@@ -416,10 +416,9 @@ document.addEventListener("DOMContentLoaded", () => {
           p.classList.add("hidden");
         });
         app.classList.remove("panel-open");
-        mainPanel?.classList.add("hidden");
         ipc?.send?.("ui:set-collapsed", true);
         activePanel = null;
-        document.body.classList.remove("home-active");
+        document.body.classList.add("home-active");
         updateToolbar(null);
         return;
       }
