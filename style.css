@@ -3561,3 +3561,16 @@ body.dark-mode .subtitle-editor #subtitle-editor-status.text-error {
   border-radius: 4px;
   pointer-events: none;
 }
+
+/* Home video resizing */
+#home-video-wrapper {
+  padding: 2rem 0;                 /* optional breathing room */
+}
+
+#home-video {
+  width: 70%;                      /* shrink from 100% to 70% */
+  height: auto;                    /* let aspect ratio stay natural */
+  max-width: 900px;                /* optional upper cap */
+  border-radius: 8px;              /* optional polish */
+  object-fit: contain !important;  /* avoid cropping */
+}
