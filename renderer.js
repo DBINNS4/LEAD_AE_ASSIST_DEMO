@@ -21,66 +21,6 @@ document.addEventListener('submit', e => {
   console.warn('⚠️ Prevented unintended form submit');
 });
 
-// Shared styled dropdown helper so demo panels don't depend on the full app bundle
-if (typeof window.setupStyledDropdown !== 'function') {
-  window.setupStyledDropdown = function setupStyledDropdown(hiddenId, values) {
-    const hidden = document.getElementById(hiddenId);
-    if (!hidden) return;
-
-    const wrapper = hidden.closest('.dropdown-wrapper');
-    const chosen = wrapper?.querySelector('.chosen-value');
-    const list   = wrapper?.querySelector('.value-list');
-
-    if (!wrapper || !list || !chosen) return;
-
-    // Clear any existing items and rebuild from the provided values
-    list.innerHTML = '';
-    values.forEach(v => {
-      const li = document.createElement('li');
-      li.textContent = v.label;
-      li.dataset.value = String(v.value);
-
-      li.addEventListener('click', () => {
-        hidden.value = String(v.value);
-        chosen.value = v.label;
-
-        list.classList.remove('open');
-        chosen.classList.remove('open');
-        wrapper.classList.remove('open');
-
-        const ev = new Event('change', { bubbles: true });
-        hidden.dispatchEvent(ev);
-      });
-
-      list.appendChild(li);
-    });
-  };
-}
-
-if (typeof window.setDropdownValue !== 'function') {
-  window.setDropdownValue = function setDropdownValue(hiddenId, value) {
-    const hidden = document.getElementById(hiddenId);
-    if (!hidden) return;
-
-    const wrapper = hidden.closest('.dropdown-wrapper');
-    const chosen = wrapper?.querySelector('.chosen-value');
-    const list   = wrapper?.querySelector('.value-list');
-
-    if (!wrapper || !list || !chosen) return;
-
-    const match = Array.from(list.children).find(
-      li => li.dataset.value === String(value)
-    );
-    if (!match) return;
-
-    hidden.value = match.dataset.value;
-    chosen.value = match.textContent;
-
-    const ev = new Event('change', { bubbles: true });
-    hidden.dispatchEvent(ev);
-  };
-}
-
 
 // 🌐 Shared Watch Mode configs for panels
 const PANEL_PRESET_EXTENSIONS = ['.json'];
@@ -142,13 +82,18 @@ function loadPanelScript(panelName) {
     return;
   }
   const scriptId = `panel-script-${panelName}`;
+  const preloaded = document.getElementById(scriptId);
+  if (preloaded) {
+    loadedPanels.add(panelName);
+    return;
+  }
 
   // 📥 Create and load new script element
   const script = document.createElement("script");
   script.id = scriptId;
   // In file:// pages, absolute filesystem paths in <script src> won't resolve.
   // Always load panel scripts relative to index.html.
-  const preferDev = !!window.electron?.DEBUG_UI; /* exposed in preload */
+  const preferDev = !!(window.electron?.DEBUG_UI && window.electron?.isPackaged === false); /* exposed in preload */
   const forcePlainScript = panelName === 'subtitleEditor';
   const useObfuscated = !preferDev && !forcePlainScript;
   const primarySrc = useObfuscated
@@ -208,6 +153,16 @@ document.addEventListener("DOMContentLoaded", () => {
     Notification.requestPermission();
   }
   const tabs = document.querySelectorAll(".tab");
+
+  // Keep sidebar right-side toggles in sync with the active panel state
+  function syncNavToggles(activePanelId) {
+    tabs.forEach(t => {
+      const panel = t.getAttribute('data-panel');
+      const cb = t.querySelector('.lae-navtoggle-check');
+      if (!cb) return;
+      cb.checked = !!activePanelId && panel === activePanelId;
+    });
+  }
 
   // ✅ License check for tab visibility (async‑safe)
   if (licenseAvailable && window.license?.isFeatureEnabled) {
@@ -319,30 +274,69 @@ document.addEventListener("DOMContentLoaded", () => {
   mainPanel?.classList.add('hidden');
 
   updateToolbar('ingest');
+  syncNavToggles(null);
 
+  // 🗑️ Preset deletion (shared across panels)
   document.querySelectorAll('.delete-preset-btn').forEach(btn => {
-    const panel = btn.dataset.panel;
-    const hiddenInput = document.getElementById(`${panel}-preset`);
-    const dropdownInput = hiddenInput?.previousElementSibling?.previousElementSibling;
+    // Use the actual panel section id as the preset namespace (matches where presets are saved)
+    const panelId = btn.closest('.panel-section')?.id || btn.dataset.panel;
 
-    hiddenInput?.addEventListener('change', () => {
+    // Find the preset dropdown next to this trash button
+    const toolbar = btn.closest('.panel-toolbar-controls');
+    const dropdownWrapper = toolbar?.querySelector('.dropdown-wrapper');
+    const hiddenInput = dropdownWrapper?.querySelector('input[type="hidden"]');
+    const dropdownInput = dropdownWrapper?.querySelector('.chosen-value');
+    const listEl = dropdownWrapper?.querySelector('.value-list');
+
+    if (!hiddenInput) {
+      btn.disabled = true;
+      return;
+    }
+
+    const syncDeleteState = () => {
+      // If the visible field is empty, treat it as “no selection”
+      if (dropdownInput && !dropdownInput.value) hiddenInput.value = '';
       btn.disabled = !hiddenInput.value;
-    });
+    };
 
+    // Initial state + keep in sync when a preset is selected
+    syncDeleteState();
+    hiddenInput.addEventListener('change', syncDeleteState);
+
+    // If the user clears the visible field, clear the hidden value too
     dropdownInput?.addEventListener('input', () => {
       if (!dropdownInput.value) {
         hiddenInput.value = '';
-        btn.disabled = true;
+        hiddenInput.dispatchEvent(new Event('change'));
       }
     });
 
+    async function refreshPresetOptions() {
+      if (!panelId || typeof window.setupStyledDropdown !== 'function') return;
+
+      const presets = await ipc.invoke('list-panel-presets', panelId);
+      const opts = (Array.isArray(presets) ? presets : [])
+        .filter(p => typeof p?.file === 'string' && p.file.toLowerCase().endsWith('.json'))
+        .map(p => ({ value: p.file, label: p.name || p.file.replace(/\.json$/i, '') }));
+
+      window.setupStyledDropdown(hiddenInput.id, opts);
+      window.setDropdownValue?.(hiddenInput.id, hiddenInput.value || '');
+      window.translatePage?.();
+    }
+
     btn.addEventListener('click', async () => {
-      const presetFile = hiddenInput?.value;
-      const presetName =
-        dropdownInput?.value ||
-        hiddenInput?.value?.replace(/\.json$/i, '') ||
-        '(unknown)';
-      if (panel !== 'leadae' && !presetFile) return;
+      const presetFile = hiddenInput.value;
+
+      // Hard guard in case UI state gets out of sync
+      if (!presetFile) {
+        syncDeleteState();
+        return;
+      }
+
+      const labelFromList =
+        listEl && [...listEl.children].find(li => li.dataset.value === presetFile)?.textContent;
+
+      const presetName = (labelFromList || presetFile).replace(/\.json$/i, '');
 
       const confirmed = await ipc.invoke(
         'show-confirm-dialog',
@@ -350,54 +344,23 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       if (!confirmed) return;
 
-      try {
-        let success;
-        if (panel === 'leadae') {
-          success = await ipc.invoke('delete-leadae-preset', { presetName });
-        } else {
-          success = await ipc.invoke('delete-panel-preset', {
-            panel,
-            presetName: presetFile
-          });
-        }
+      const success = await ipc.invoke('delete-panel-preset', {
+        panel: panelId,
+        presetName: presetFile
+      });
 
-        if (success) {
-          console.log(`🗑️ Deleted preset: ${presetName}`);
-          ipc.send('preset-deleted', panel);
-          hiddenInput.value = '';
-          dropdownInput.value = '';
-          btn.disabled = true;
+      if (success) {
+        // Clear selection + UI
+        hiddenInput.value = '';
+        if (dropdownInput) dropdownInput.value = '';
+        hiddenInput.dispatchEvent(new Event('change'));
 
-          // 🔄 Force dropdown rebuild for the current panel
-          if (typeof window.refreshPanelPresets === 'function') {
-            await window.refreshPanelPresets(panel);
-          }
+        // Rebuild options so the deleted preset disappears immediately
+        await refreshPresetOptions();
 
-          const listEl = hiddenInput?.previousElementSibling;
-          if (listEl) {
-            listEl.innerHTML = '';
-            const presets =
-              panel === 'leadae'
-                ? await ipc.invoke('list-leadae-presets')
-                : await ipc.invoke('list-panel-presets', panel);
-            presets.forEach(p => {
-              const li = document.createElement('li');
-              li.textContent = p.name;
-              li.addEventListener('click', () => {
-                dropdownInput.value = p.name;
-                hiddenInput.value = panel === 'leadae' ? p.name : p.file;
-                hiddenInput.dispatchEvent(new Event('change'));
-              });
-              listEl.appendChild(li);
-            });
-          }
-
-          alert(`✅ Preset "${presetName}" deleted successfully.`);
-        } else {
-          alert(`❌ Could not delete preset "${presetName}".`);
-        }
-      } catch (err) {
-        console.error('❌ Failed to delete preset:', err);
+        alert(`✅ Preset "${presetName}" deleted successfully.`);
+      } else {
+        alert(`❌ Could not delete preset "${presetName}".`);
       }
     });
   });
@@ -421,6 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
         activePanel = null;
         document.body.classList.remove("home-active");
         updateToolbar(null);
+        syncNavToggles(null);
         return;
       }
 
@@ -453,6 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
       activePanel = targetPanel;
       document.body.classList.toggle("home-active", targetPanel === HOME_PANEL);
       updateToolbar(targetPanel);
+      syncNavToggles(targetPanel);
       
       // 🧼 Clear all progress bars and summaries across panels
       Object.values(PANEL_JOB_UI).forEach(cfg => {
@@ -494,22 +459,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-  
-  
+
+
   // 🤖 AI Assistant
-  const runAiButton = document.getElementById("run-ai");
-  const aiPrompt = document.getElementById("ai-prompt");
-  const aiResponse = document.getElementById("ai-response");
-
-  runAiButton?.addEventListener("click", () => {
-    const prompt = aiPrompt.value.trim();
-    if (!prompt) return;
-
-    aiResponse.textContent = "Thinking...";
-    setTimeout(() => {
-      aiResponse.textContent = `🧠 Applied to "${activePanel}" panel: "${prompt}"`;
-    }, 800);
-  });
+  const translate = (key, options, fallback) => {
+    const translator = window.i18n?.t?.bind(window.i18n);
+    const translated = translator ? translator(key, options) : undefined;
+    if (translated && translated !== key) return translated;
+    if (fallback) return fallback;
+    return translated ?? key;
+  };
 
   function updatePanelSummary(panel, text) {
     const cfg = PANEL_JOB_UI[panel];
@@ -531,17 +490,28 @@ document.addEventListener("DOMContentLoaded", () => {
       ingest: 'cancel-ingest',
       transcode: 'cancelTranscode',
       transcribe: 'cancel-transcribe',
-      'adobe-utilities': 'cancel-adobe-utilities'
+      'adobe-utilities': 'cancel-adobe-utilities',
+      'project-organizer': 'cancel-project-organizer'
     };
     return document.getElementById(map[panel]);
   }
 
   ipc?.on('queue-job-added', (_e, job) => {
-    updatePanelSummary(job.panel, `🗳️ ${job.panel} job queued.`);
+    const text = translate(
+      "queueJobQueued",
+      { panel: job.panel },
+      `🗳️ ${job.panel} job queued.`
+    );
+    updatePanelSummary(job.panel, text);
   });
 
   ipc?.on('queue-job-start', (_e, job) => {
-    updatePanelSummary(job.panel, `🚀 ${job.panel} job started.`);
+    const text = translate(
+      "queueJobStarted",
+      { panel: job.panel },
+      `🚀 ${job.panel} job started.`
+    );
+    updatePanelSummary(job.panel, text);
     const btn = getCancelButton(job.panel);
     if (btn) btn.disabled = false;
 
@@ -566,19 +536,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   ipc?.on('queue-job-complete', (_e, job) => {
-    updatePanelSummary(job.panel, `✅ ${job.panel} job complete.`);
+    const text = translate(
+      "queueJobComplete",
+      { panel: job.panel },
+      `✅ ${job.panel} job complete.`
+    );
+    updatePanelSummary(job.panel, text);
     const btn = getCancelButton(job.panel);
     if (btn) btn.disabled = true;
   });
 
   ipc?.on('queue-job-failed', (_e, job) => {
-    updatePanelSummary(job.panel, `❌ ${job.panel} job failed.`);
+    const text = translate(
+      "queueJobFailed",
+      { panel: job.panel },
+      `❌ ${job.panel} job failed.`
+    );
+    updatePanelSummary(job.panel, text);
     const btn = getCancelButton(job.panel);
     if (btn) btn.disabled = true;
   });
 
   ipc?.on('queue-job-cancelled', (_e, job) => {
-    updatePanelSummary(job.panel, `🛑 ${job.panel} job cancelled.`);
+    const text = translate(
+      "queueJobCancelled",
+      { panel: job.panel },
+      `🛑 ${job.panel} job cancelled.`
+    );
+    updatePanelSummary(job.panel, text);
     const btn = getCancelButton(job.panel);
     if (btn) btn.disabled = true;
   });

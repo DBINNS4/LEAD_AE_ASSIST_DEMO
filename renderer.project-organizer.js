@@ -2,6 +2,27 @@
 
 const electron = window.electron ?? {};
 const ipc = window.ipc ?? electron;
+const PANEL_ID = 'project-organizer';
+
+// Renderer-safe snapshot helper: no require, no Node API.
+function snapshotOrganizerJobState(state) {
+  const payload = {
+    selectedFolders: state.selectedFolders,
+    folderOrder: state.folderOrder,
+    customFolders: state.customFolders,
+    folderAssets: state.folderAssets
+  };
+
+  if (typeof structuredClone === 'function') {
+    return structuredClone(payload);
+  }
+
+  return JSON.parse(JSON.stringify(payload));
+}
+
+const organizerState = {
+  currentJobId: null
+};
 
 const el = {
   folderList: document.getElementById('folder-list'),
@@ -10,6 +31,7 @@ const el = {
   customFolderName: document.getElementById('custom-folder-name'),
   resetButton: document.getElementById('reset-project-organizer'),
   generateButton: document.getElementById('generate-project-folders'),
+  cancelButton: document.getElementById('cancel-project-organizer'),
   summary: document.getElementById('project-summary'),
   outputPath: document.getElementById('output-location-path'),
   outputBtn: document.getElementById('select-output-location'),
@@ -18,7 +40,43 @@ const el = {
   presetSelect: document.getElementById('organizer-preset'),
   saveConfig: document.getElementById('organizer-save-config'),
   loadConfig: document.getElementById('organizer-load-config'),
+  status: document.getElementById('project-organizer-job-status'),
+  wheel: document.querySelector('#project-organizer-job-status .wheel-and-hamster')
 };
+
+if (el.cancelButton) el.cancelButton.disabled = true;
+
+function ensureHamster(root) {
+  if (!root || root.querySelector('.wheel')) return;
+  root.innerHTML = `
+      <div class="wheel"></div>
+      <div class="hamster">
+        <div class="hamster__body">
+          <div class="hamster__head">
+            <div class="hamster__ear"></div>
+            <div class="hamster__eye"></div>
+            <div class="hamster__nose"></div>
+          </div>
+          <div class="hamster__limb hamster__limb--fr"></div>
+          <div class="hamster__limb hamster__limb--fl"></div>
+          <div class="hamster__limb hamster__limb--br"></div>
+          <div class="hamster__limb hamster__limb--bl"></div>
+          <div class="hamster__tail"></div>
+        </div>
+      </div>
+      <div class="spoke"></div>`;
+}
+
+function showOrganizerHamster() {
+  if (!el.status) return;
+  el.status.style.display = 'block';
+  ensureHamster(el.wheel);
+}
+
+function hideOrganizerHamster() {
+  if (el.status) el.status.style.display = 'none';
+  if (el.wheel) el.wheel.innerHTML = '';
+}
 
 function logOrganizer(msg, opts = {}) {
   window.logPanel?.log('organizer', msg, opts);
@@ -36,6 +94,58 @@ document.addEventListener('dragover', event => {
 document.addEventListener('drop', event => {
   if (event.dataTransfer?.types?.includes?.('Files')) {
     event.preventDefault();
+  }
+});
+
+ipc?.on?.('queue-job-start', (_e, job) => {
+  if (job.panel !== PANEL_ID) return;
+  organizerState.currentJobId = job.id;
+  if (el.cancelButton) el.cancelButton.disabled = false;
+  showOrganizerHamster();
+  if (el.summary) {
+    el.summary.textContent = '⏳ Project organizer started...';
+  }
+});
+
+ipc?.on?.('queue-job-progress', (_event, payload) => {
+  if (payload.panel !== PANEL_ID) return;
+  showOrganizerHamster();
+});
+
+ipc?.on?.('queue-job-complete', (_e, job) => {
+  if (job.panel !== PANEL_ID) return;
+  if (organizerState.currentJobId && job.id !== organizerState.currentJobId) return;
+  organizerState.currentJobId = null;
+  if (el.cancelButton) el.cancelButton.disabled = true;
+  hideOrganizerHamster();
+  if (el.summary) {
+    const message =
+      job.result?.logText ||
+      job.result?.summary ||
+      '✅ Project structure created.';
+    el.summary.textContent = message;
+  }
+});
+
+ipc?.on?.('queue-job-failed', (_e, job) => {
+  if (job.panel !== PANEL_ID) return;
+  if (organizerState.currentJobId && job.id !== organizerState.currentJobId) return;
+  organizerState.currentJobId = null;
+  if (el.cancelButton) el.cancelButton.disabled = true;
+  hideOrganizerHamster();
+  if (el.summary) {
+    el.summary.textContent = job.error || '❌ Project organizer failed.';
+  }
+});
+
+ipc?.on?.('queue-job-cancelled', (_e, job) => {
+  if (job.panel !== PANEL_ID) return;
+  if (organizerState.currentJobId && job.id !== organizerState.currentJobId) return;
+  organizerState.currentJobId = null;
+  if (el.cancelButton) el.cancelButton.disabled = true;
+  hideOrganizerHamster();
+  if (el.summary) {
+    el.summary.textContent = '⚠️ Project organizer cancelled.';
   }
 });
 
@@ -189,7 +299,15 @@ function renderFolderList() {
     addBtn.title = 'Add files';
     addBtn.addEventListener('click', async ev => {
       ev.stopPropagation();
-      let files = await ipc.selectFiles?.();
+      let files = [];
+      try {
+        files = await ipc.selectFiles?.();
+      } catch (err) {
+        const msg = `❌ File picker failed: ${err?.message || err}`;
+        logOrganizer(msg, { isError: true });
+        if (el.summary) el.summary.textContent = msg;
+        return;
+      }
       if (!files?.length) return;
 
       // 🔧 Normalize if raw filePaths were returned instead of { path }
@@ -198,8 +316,17 @@ function renderFolderList() {
       }
 
       const targetId = li.dataset.id;
+      const paths = files.map(f => f.path).filter(Boolean);
+      if (!paths.length) return;
+
       if (!folderAssets[targetId]) folderAssets[targetId] = [];
-      folderAssets[targetId].push(...files.map(f => f.path).filter(Boolean));
+      folderAssets[targetId].push(...paths);
+
+      logOrganizer(
+        `📎 Attached ${paths.length} file(s) to "${targetId}".`,
+        { detail: paths.join('\n') }
+      );
+
       updateSummary();
       updateAttachmentIndicators();
     });
@@ -223,9 +350,15 @@ function renderFolderList() {
       const hasFiles = folderAssets[targetId]?.length > 0;
 
       if (hasFiles) {
+        const removed = folderAssets[targetId].slice();
         delete folderAssets[targetId];
         updateSummary();
         updateAttachmentIndicators();
+
+        logOrganizer(
+          `🧹 Cleared ${removed.length} attached file(s) from ${targetId}.`,
+          { detail: removed.join('\n') }
+        );
       } else {
         // 🧹 Handle root folder and all nested subfolders
         const idsToRemove = folderOrder.filter(
@@ -243,6 +376,11 @@ function renderFolderList() {
             folderOrder = folderOrder.filter(f => f !== id);
             delete folderAssets[id];
           });
+
+          logOrganizer(
+            `🗑️ Removed folder ${targetId} and ${Math.max(idsToRemove.length - 1, 0)} subfolder(s).`,
+            { detail: idsToRemove.join(', ') }
+          );
 
           renderFolderList();
           updateSelectedFolders();
@@ -364,6 +502,14 @@ async function handleDragEnd() {
 function updateSelectedFolders() {
   selectedFolders = [...el.folderList.querySelectorAll('li.draggable-item.selected')]
     .map(li => li.dataset.id);
+
+  // If nothing is explicitly selected, treat all visible folders as included
+  // so the generator always reflects the current structure unless the user
+  // removes folders entirely.
+  if (selectedFolders.length === 0) {
+    selectedFolders = [...el.folderList.querySelectorAll('li.draggable-item')]
+      .map(li => li.dataset.id);
+  }
   updateSummary();
 }
 
@@ -418,7 +564,9 @@ el.addSubfolder?.addEventListener('click', () => {
 
   const selected = el.folderList.querySelectorAll('li.draggable-item.selected');
   if (selected.length !== 1) {
-    alert('Please select exactly one folder to nest under.');
+    const errMsg = '❌ Please select exactly one folder to nest under.';
+    logOrganizer(errMsg, { isError: true });
+    alert(errMsg);
     return;
   }
 
@@ -433,6 +581,7 @@ el.addSubfolder?.addEventListener('click', () => {
     } else {
       folderOrder.push(fullPath);
     }
+    logOrganizer(`📂 Added subfolder "${fullPath}".`);
   }
 
   el.customFolderName.value = '';
@@ -458,6 +607,7 @@ el.addCustomFolder?.addEventListener('click', () => {
   if (!customFolders.some(f => f.id === name)) {
     customFolders.push({ id: name, label: '(Custom)', groupId: name });
     folderOrder.push(name);
+    logOrganizer(`📂 Added custom root folder "${name}".`);
   }
 
   el.customFolderName.value = '';
@@ -476,10 +626,17 @@ el.addCustomFolder?.addEventListener('click', () => {
 
 // 📍 Output path selector
 el.outputBtn?.addEventListener('click', async () => {
-  const folder = await ipc?.selectFolder?.();
-  if (folder) {
-    el.outputPath.value = folder;
-    updateSummary();
+  try {
+    const folder = await ipc?.selectFolder?.();
+    if (folder) {
+      el.outputPath.value = folder;
+      logOrganizer(`📁 Output path set to: ${folder}`, { fileId: folder });
+      updateSummary();
+    }
+  } catch (err) {
+    const msg = `❌ Folder picker failed: ${err?.message || err}`;
+    logOrganizer(msg, { isError: true });
+    if (el.summary) el.summary.textContent = msg;
   }
 });
 
@@ -582,10 +739,86 @@ function updateAttachmentIndicators() {
   });
 }
 
-// 🧠 Generate Folder Structure (demo: disabled click)
-el.generateButton?.addEventListener('click', () => {
-  // In the interactive demo, this button is visual-only.
-  // Hover and press states are styled via CSS; no logic runs here.
+// 🧠 Generate Folder Structure
+el.generateButton?.addEventListener('click', async () => {
+  updateFolderAssetPaths();
+
+  const rootName = (el.rootName?.value || '').trim();
+  const outputPath = (el.outputPath?.value || '').trim();
+
+  if (el.rootName) el.rootName.value = rootName;
+  if (el.outputPath) el.outputPath.value = outputPath;
+
+  if (!rootName) {
+    const errMsg = '❌ Please enter a Root Folder Name before generating.';
+    logOrganizer(errMsg, { isError: true });
+    if (el.summary) el.summary.textContent = errMsg;
+    return;
+  }
+
+  if (!outputPath) {
+    const errMsg = '❌ Please set an Output Path before generating.';
+    logOrganizer(errMsg, { isError: true });
+    if (el.summary) el.summary.textContent = errMsg;
+    return;
+  }
+
+  const genMsg = '⚙️ Generating structure...';
+  logOrganizer(genMsg);
+  el.summary.textContent = genMsg;
+
+  // 🔥 Make sure the hamster shows up immediately
+  showOrganizerHamster();
+
+  const snapshot = snapshotOrganizerJobState({
+    selectedFolders,
+    folderOrder,
+    customFolders,
+    folderAssets
+  });
+
+  const config = {
+    rootName,
+    prependNumbers: el.prependNumbers.checked,
+    outputPath,
+    ...snapshot
+  };
+
+  try {
+    const jobId = await ipc.invoke('queue-add-project-organizer', config);
+    organizerState.currentJobId = jobId;
+    await ipc.invoke('queue-start');
+    logOrganizer(`✅ Project organizer queued (Job ID: ${jobId})`);
+    el.summary.textContent = '⏳ Job queued in background...';
+  } catch (err) {
+    const errMsg = `❌ Organizer job failed to queue: ${err.message}`;
+    logOrganizer(errMsg, { isError: true });
+    el.summary.textContent = errMsg;
+    return;
+  }
+});
+
+el.cancelButton?.addEventListener('click', async () => {
+  if (!organizerState.currentJobId) {
+    const noJobMsg = '⚠️ No organizer job to cancel.';
+    logOrganizer(noJobMsg);
+    if (el.summary) el.summary.textContent = noJobMsg;
+    return;
+  }
+
+  const cancelMsg = '⛔ Cancel requested...';
+  logOrganizer(cancelMsg);
+  if (el.summary) el.summary.textContent = cancelMsg;
+  el.cancelButton.disabled = true;
+
+  try {
+    await ipc.invoke('queue-cancel-job', organizerState.currentJobId);
+  } catch (err) {
+    const errMsg = `❌ Cancel error: ${err.message}`;
+    logOrganizer(errMsg, { isError: true });
+    if (el.summary) el.summary.textContent = errMsg;
+    if (organizerState.currentJobId) el.cancelButton.disabled = false;
+  }
 });
 
 // 💾 Save and Load Preset
@@ -601,7 +834,100 @@ function gatherOrganizerConfig() {
   };
 }
 
-function applyOrganizerPreset(data) {
+function toStringArray(value, label, errors) {
+  if (!Array.isArray(value)) {
+    if (value !== undefined) errors.push(`${label} must be an array of strings`);
+    return [];
+  }
+
+  const cleaned = value.filter(v => typeof v === 'string' && v.trim() !== '');
+  if (cleaned.length !== value.length) {
+    errors.push(`${label} contained non-string entries that were removed`);
+  }
+  return cleaned;
+}
+
+function sanitizeFolderAssets(rawAssets, errors) {
+  if (!rawAssets || typeof rawAssets !== 'object') {
+    if (rawAssets !== undefined) errors.push('folderAssets must be an object');
+    return {};
+  }
+
+  const sanitized = {};
+  for (const [key, value] of Object.entries(rawAssets)) {
+    if (typeof key !== 'string' || !key.trim()) {
+      errors.push('folderAssets contains a non-string key and was skipped');
+      continue;
+    }
+
+    const paths = toStringArray(value, `folderAssets[${key}]`, errors);
+    if (paths.length > 0) sanitized[key] = paths;
+  }
+  return sanitized;
+}
+
+function validateOrganizerPreset(data) {
+  const errors = [];
+
+  if (!data || typeof data !== 'object') {
+    return { ok: false, errors: ['Preset file is not a valid JSON object'] };
+  }
+
+  const sanitized = {
+    rootName: typeof data.rootName === 'string' ? data.rootName : '',
+    prependNumbers: !!data.prependNumbers,
+    outputPath: typeof data.outputPath === 'string' ? data.outputPath : ''
+  };
+
+  sanitized.folderOrder = toStringArray(data.folderOrder, 'folderOrder', errors);
+  sanitized.selectedFolders = toStringArray(
+    data.selectedFolders,
+    'selectedFolders',
+    errors
+  );
+
+  if (Array.isArray(data.customFolders)) {
+    sanitized.customFolders = data.customFolders
+      .filter(
+        f =>
+          f &&
+          typeof f === 'object' &&
+          typeof f.id === 'string' &&
+          typeof f.label === 'string' &&
+          typeof f.groupId === 'string'
+      )
+      .map(f => ({ id: f.id, label: f.label, groupId: f.groupId }));
+
+    if (sanitized.customFolders.length !== data.customFolders.length) {
+      errors.push('customFolders contained invalid entries that were removed');
+    }
+  } else {
+    sanitized.customFolders = [];
+    if (data.customFolders !== undefined)
+      errors.push('customFolders must be an array of objects');
+  }
+
+  sanitized.folderAssets = sanitizeFolderAssets(data.folderAssets, errors);
+
+  return { ok: true, sanitized, errors };
+}
+
+function applyOrganizerPreset(rawData, sourceLabel = 'preset') {
+  const validation = validateOrganizerPreset(rawData);
+  if (!validation.ok) {
+    const errMsg = `❌ Unable to apply organizer ${sourceLabel}: ${validation.errors.join(', ')}`;
+    logOrganizer(errMsg, { isError: true });
+    alert(errMsg);
+    return;
+  }
+
+  if (validation.errors.length) {
+    const warnMsg = `⚠️ Organizer ${sourceLabel} contained invalid data that was ignored: ${validation.errors.join(', ')}`;
+    logOrganizer(warnMsg, { isError: true });
+  }
+
+  const data = validation.sanitized;
+
   if (el.rootName) el.rootName.value = data.rootName || '';
   if (el.prependNumbers) el.prependNumbers.checked = !!data.prependNumbers;
   if (el.outputPath) el.outputPath.value = data.outputPath || '';
@@ -645,6 +971,9 @@ function refreshPresetDropdown() {
       .map(f => ({ value: f, label: f.replace(/\.json$/, '') }));
   } catch (err) {
     console.error('Failed to read presets:', err);
+    logOrganizer(`❌ Failed to read organizer presets: ${err.message}`, {
+      isError: true
+    });
   }
   setupStyledDropdown('organizer-preset', opts);
   setDropdownValue('organizer-preset', hidden.value || '');
@@ -665,11 +994,15 @@ el.presetSelect?.addEventListener('change', () => {
   const file = el.presetSelect.value;
   if (!file) return;
   try {
-    const raw = electron.readTextFile(electron.joinPath(presetDir, file));
+    const fullPath = electron.joinPath(presetDir, file);
+    const raw = electron.readTextFile(fullPath);
     const data = JSON.parse(raw);
-    applyOrganizerPreset(data);
+    applyOrganizerPreset(data, `preset "${file}"`);
+    logOrganizer(`📚 Applied organizer preset "${file}".`, { fileId: fullPath });
   } catch (err) {
     console.error('Failed to load preset', err);
+    const errMsg = `❌ Failed to load preset "${file}": ${err.message}`;
+    logOrganizer(errMsg, { isError: true });
   }
 });
 
@@ -682,6 +1015,8 @@ el.saveConfig?.addEventListener('click', async () => {
   if (file) {
     ipc.writeTextFile(file, JSON.stringify(cfg, null, 2));
     refreshPresetDropdown();
+    const msg = `💾 Organizer config saved to "${file}".`;
+    logOrganizer(msg, { fileId: file });
     alert('Config saved.');
   }
 });
@@ -690,9 +1025,15 @@ el.loadConfig?.addEventListener('click', async () => {
   const file = await ipc.openFile({ title: 'Load Preset' });
   if (!file) return;
   try {
-    const data = JSON.parse(ipc.readTextFile(file));
-    applyOrganizerPreset(data);
+    const raw = ipc.readTextFile(file);
+    const data = JSON.parse(raw);
+    applyOrganizerPreset(data, `config "${file}"`);
+    logOrganizer(`📥 Loaded organizer config from "${file}".`, {
+      fileId: file
+    });
   } catch (err) {
+    const errMsg = `❌ Failed to load config from "${file}": ${err.message}`;
+    logOrganizer(errMsg, { isError: true });
     alert('Failed to load config: ' + err.message);
   }
 });
@@ -707,24 +1048,30 @@ const organizerOverview = document.querySelector('#project-organizer #project-or
 if (organizerOverview && !organizerOverview.dataset.bound) {
   organizerOverview.innerHTML = `
     <div class="tooltip-content">
-      <div class="tooltip-header">PROJECT ORGANIZER OVERVIEW</div>
+      <div class="tooltip-header">PROJECT ORGANIZER — Technical Overview</div>
 
       <div class="tooltip-section">
-        <span class="tooltip-subtitle">What this panel is for</span>
+        <span class="tooltip-subtitle">Core capabilities</span>
         <ul class="tooltip-list">
-          <li>Design a reusable project folder tree for shows, clients, or teams.</li>
-          <li>Mix built‑in template folders with your own custom folders and subfolders.</li>
-          <li>Generate that structure into a chosen project root on disk.</li>
+          <li>Defines a reusable project folder tree for shows, clients, or facilities.</li>
+          <li>Combines built‑in template folders with arbitrary custom folders and nested subfolders.</li>
+          <li>Optionally prefixes top-level folders with numeric ordering tokens.</li>
         </ul>
       </div>
 
       <div class="tooltip-section">
-        <span class="tooltip-subtitle">Quick workflow</span>
+        <span class="tooltip-subtitle">Inputs / outputs</span>
         <ul class="tooltip-list">
-          <li><strong>Configure structure</strong> – drag folders to reorder, toggle them on/off, and add custom entries.</li>
-          <li><strong>Name the root</strong> – set the root folder name and choose whether to prepend numbers.</li>
-          <li><strong>Choose location</strong> – pick the project volume/path where folders should be created.</li>
-          <li><strong>Generate</strong> – click <em>Generate Project Folders</em> and review the summary.</li>
+          <li>Inputs: template selection, custom folder definitions, root folder name, and output path.</li>
+          <li>Outputs: a deterministic folder tree created on disk plus a text summary of the structure.</li>
+        </ul>
+      </div>
+
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">Under the hood</span>
+        <ul class="tooltip-list">
+          <li>Uses a simple ordered list of IDs and paths to generate folder trees for presets and jobs.</li>
+          <li>Organizer presets snapshot the current structure so shows can share the same layout.</li>
         </ul>
       </div>
     </div>

@@ -3,18 +3,18 @@
   --font-headings: "Courier New", monospace;
   --font-mono: "Courier New", monospace;
   --font-ui: "Courier New", monospace;
-  --color-button-bg: #3b82f6;
+  --color-button-bg: #3b6cff;
   --color-button-text: #ffffff;
-  --color-button-hover-bg: #2563eb;
+  --color-button-hover-bg: #274bdb;
   --color-button-hover-text: #ffffff;
-  --progress-accent-start: #3b82f6;
-  --progress-accent-end: #2563eb;
-  --progress-accent-text: var(--progress-accent-end);
-  --color-danger-bg: #dc2626;
+  --progress-accent-start: #4fd1ff;
+  --progress-accent-end: #3b6cff;
+  --progress-accent-text: #3b6cff;
+  --color-danger-bg: #e02424;
   --color-danger-text: #ffffff;
   --color-danger-hover-bg: #b91c1c;
   --color-danger-hover-text: #ffffff;
-  --color-label: #ccc;
+  --color-label: #5b6472;
 
   /* Spacing scale: 4px base on 16px root */
   --space-0: 0;
@@ -31,13 +31,18 @@
   --gap-md:    var(--space-3);
   --gap-lg:    var(--space-4);
   --gap-xl:    var(--space-5);
+
+/* Unified single-line control sizing (match dropdown height) */
+--control-height: 2rem;
+--control-padding-x: var(--space-2);
+--control-padding-y: var(--space-2);
 }
 
 body {
   margin: 0;
   font-family: var(--font-body);
-  background-color: #f4f7fa;
-  color: #1c1c1c;
+  background-color: #f6f8fb;
+  color: #0b1220;
   overflow-x: hidden;
 }
 
@@ -100,7 +105,7 @@ h3,
   justify-content: flex-start;  /* align to left */
   align-items: center;
   pointer-events: none;
-  overflow: hidden;          /* prevent bleed into sidebar */
+  overflow: visible;         /* let tooltips spill into the panel */
   z-index: 200;              /* ✅ ensure it layers above main panel */
 }
 
@@ -147,7 +152,7 @@ h3,
   justify-content: center;
 }
 
-#panel-toolbar button {
+#panel-toolbar button:not(.button) {
   height: 26px;
   display: flex;
   align-items: center;
@@ -159,15 +164,15 @@ h3,
   box-shadow: none;
 }
 
-#panel-toolbar button:hover,
-#panel-toolbar button:active {
+#panel-toolbar button:not(.button):hover,
+#panel-toolbar button:not(.button):active {
   -webkit-box-shadow: none;
   box-shadow: none;
 }
 
 .panel-section .panel-toolbar-controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-start;  /* left-align presets in panel */
   position: relative;
@@ -182,12 +187,92 @@ h3,
   display: flex;
   align-items: center;
   position: absolute;
-  right: 0;
+  right: var(--space-3);
 }
 
 .panel-section .panel-toolbar-controls .reconnect-toolbar-button .container {
   flex: 0 0 auto;
+}/* ============================
+   Reconnect Button (Uiverse: teymr) — scoped
+   ============================ */
+
+/* Keep the existing wrapper sizing */
+.reconnect-toolbar-button .container {
+  width: 3em;
+  height: 3em;
+  position: relative;
 }
+
+/* Hide checkbox (state only) */
+#reconnect-checkbox {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Visual switch */
+.reconnect-switch {
+  position: absolute;
+  inset: 0;
+  background-color: rgb(99, 99, 99);
+  border-radius: 50%;
+  z-index: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgb(126, 126, 126);
+  box-shadow: 0px 0px 3px rgb(2, 2, 2) inset;
+  transition: 0.5s;
+}
+
+.reconnect-switch svg {
+  width: 1.2em;
+}
+
+.reconnect-switch svg path {
+  fill: rgb(48, 48, 48);
+}
+
+#reconnect-checkbox:checked + .reconnect-switch {
+  box-shadow:
+    0px 0px 1px rgba(6, 97, 152) inset,
+    0px 0px 2px rgba(6, 97, 152) inset,
+    0px 0px 10px rgba(6, 97, 152) inset,
+    0px 0px 40px rgba(6, 97, 152),
+    0px 0px 60px rgba(6, 97, 152),
+    0px 0px 5px rgba(6, 97, 152);
+  border: 2px solid rgba(48, 164, 201);
+  background-color: rgb(146, 180, 184);
+}
+
+#reconnect-checkbox:checked + .reconnect-switch svg {
+  filter: drop-shadow(0px 0px 5px rgb(151, 243, 255));
+}
+
+#reconnect-checkbox:checked + .reconnect-switch svg path {
+  fill: rgb(255, 255, 255);
+}
+
+#reconnect-checkbox:active + .reconnect-switch {
+  transform: translate(0em, 0.1em);
+  box-shadow:
+    0px 0px 0.1px rgba(6, 97, 152) inset,   
+    0px 0px 0.2px rgba(6, 97, 152) inset,
+    0px 0px 1px rgba(6, 97, 152) inset,
+    0px 0px 10px rgba(6, 97, 152),
+    0px 0px 50px rgba(6, 97, 152);
+  border: 2px solid rgba(48, 164, 201);
+  background-color: rgb(146, 180, 184);
+}
+
+#reconnect-checkbox:active + .reconnect-switch svg path {
+  box-shadow: 0.2em 0.2em 0.3em rgba(0, 0, 0, 0.3);
+  transform: translate(0em, 0.1em);
+}
+
+
 
 .panel-section .panel-toolbar-controls .dropdown-wrapper {
   width: 15rem;
@@ -198,6 +283,13 @@ h3,
   align-items: center;
 }
 
+.panel-section .panel-toolbar-controls .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
 .panel-section .panel-toolbar-controls .chosen-value {
   height: 2.25rem;
   line-height: 2.25rem;
@@ -206,7 +298,7 @@ h3,
   justify-content: center;
 }
 
-.panel-section .panel-toolbar-controls button {
+.panel-section .panel-toolbar-controls button:not(.button) {
   height: 2.25rem;
   display: inline-flex;
   align-items: center;
@@ -372,9 +464,9 @@ body.home-active .main-panel {
 .panel-section details > summary {
   margin-top: var(--space-5);       /* 24px above each heading */
   font-size: 1.1rem;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #c7ced9;
   padding-bottom: var(--space-1);   /* 4px underline gap */
-  color: #1c1c1c;
+  color: #0b1220;
   font-family: var(--font-headings);
   font-weight: bold;
   display: flex;
@@ -471,15 +563,29 @@ body.home-active .main-panel {
   transform: translateY(-50%);
 }
 
-/* ===== Text Inputs ===== */
+/* ===== Form Controls (single-line) ===== */
 input[type="text"],
 input[type="number"],
-textarea,
+input[type="password"],
+input[type="date"],
 select {
   width: 100%;
+  height: var(--control-height);
+  padding: var(--control-padding-y) var(--control-padding-x);
+  margin: var(--space-2) 0;    /* 8px */
+  border: 1px solid #d6dbe3;
+  border-radius: 0;
+  box-sizing: border-box;
+  font-family: var(--font-body);
+  line-height: 1.2;
+}
+
+/* ===== Textareas (multi-line) ===== */
+textarea {
+  width: 100%;
   padding: 0.65rem;
-  margin: var(--space-2) 0;    /* 0.5rem / 8px */
-  border: 1px solid #ccc;
+  margin: var(--space-2) 0;    /* 8px */
+  border: 1px solid #d6dbe3;
   border-radius: 0;
   box-sizing: border-box;
   font-family: var(--font-body);
@@ -513,6 +619,12 @@ label:has(> input[type="checkbox"]),
   display: inline-flex;
   align-items: center;
   gap: 6px; /* match existing spacing */
+}
+
+/* Never let checkboxes shrink when label text wraps */
+.checkbox-label > input[type="checkbox"]:not(.l) {
+  flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 /* Half-Size Checkbox */
@@ -565,47 +677,135 @@ input[type="checkbox"]:not(.l):checked {
 
 input[type="checkbox"]:not(.l):checked::before {
   transform: rotate(50deg) translateX(-1.5px) translateY(4px) scaleX(0.6);
-  background: #3b82f6;
+  background: #3b6cff;
 }
 
 input[type="checkbox"]:not(.l):checked::after {
   transform: rotate(-50deg) translateX(3px) translateY(1.5px);
-  background: #3b82f6;
+  background: #3b6cff;
 }
 
-/* ===== Buttons ===== */
-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  height: 50px;
-  margin: 5px;
-  padding: 0 1rem;
-  width: auto;
-  white-space: nowrap;
-  font-family: Consolas, Courier New, monospace;
-  font-size: 16px;
-  color: rgb(161, 161, 161);
-  border: 1px solid #404c5d;
-  border-radius: 5px;
-  background: linear-gradient(145deg, #384452, #1b2632);
-  box-shadow: -1px -5px 15px #41465b, 5px 5px 15px #41465b,
-    inset 5px 5px 10px #1b2632, inset -5px -5px 10px #1b2632;
-  transition: 0.5s;
+/* From Uiverse.io by mrhyddenn */ 
+.button {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: none;
+  color: #0f1923;
+  cursor: pointer;
+  position: relative;
+  padding: 12px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 14px;
+  font-family: var(--font-body);
+  transition: all .15s ease;
 }
 
-button:hover {
-  box-shadow: 1px 1px 13px #20232e, -1px -1px 13px #545b78;
-  color: #d6d6d6;
+.button::before,
+.button::after {
+  content: '';
+  display: block;
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: calc(50% - 5px);
+  border: 1px solid #7D8082;
+  transition: all .15s ease;
 }
 
-button:active {
-  box-shadow: 1px 1px 13px #20232e, -1px -1px 33px #545b78;
-  color: #d6d6d6;
-  transition: 0.1s;
+.button::before {
+  top: 0;
+  border-bottom-width: 0;
 }
 
+.button::after {
+  bottom: 0;
+  border-top-width: 0;
+}
+
+.button:active,
+.button:focus {
+  outline: none;
+}
+
+.button:active::before,
+.button:active::after {
+  right: 3px;
+  left: 3px;
+}
+
+.button:active::before {
+  top: 3px;
+}
+
+.button:active::after {
+  bottom: 3px;
+}
+
+.button_lg {
+  position: relative;
+  display: block;
+  padding: 12px 24px;
+  color: #fff;
+  background-color: #0f1923;
+  overflow: hidden;
+  box-shadow: inset 0px 0px 0px 1px transparent;
+}
+
+.button_lg::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  background-color: #0f1923;
+}
+
+.button_lg::after {
+  content: '';
+  display: block;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  height: 4px;
+  background-color: #0f1923;
+  transition: all .2s ease;
+}
+
+.button_sl {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  left: -8px;
+  width: 0;
+  background-color: #ff4655;
+  transform: skew(-15deg);
+  transition: all .2s ease;
+}
+
+.button_text {
+  position: relative;
+  font-family: inherit;
+}
+
+.button:hover {
+  color: #0f1923;
+}
+
+.button:hover .button_sl {
+  width: calc(100% + 15px);
+}
+
+.button:hover .button_lg::after {
+  background-color: #fff;
+}
 .btn-danger {
   background-color: var(--color-danger-bg);
   color: var(--color-danger-text);
@@ -621,7 +821,7 @@ textarea {
   background-color: #ffffff;
   padding: var(--space-4);
   border-radius: 0;
-  border: 1px solid #ccc;      /* 🔧 add this line */
+  border: 1px solid #d6dbe3;
   font-family: var(--font-mono);
   font-size: 0.9rem;
   margin-top: var(--space-4);
@@ -700,9 +900,9 @@ body.dark-mode #ingest-job-preview-box::-webkit-scrollbar-thumb:hover {
 /* === DARK MODE VARIANT === */
 body.dark-mode .status-log,
 body.dark-mode textarea {
-  background-color: #0f172a;
-  color: #d1d5db;
-  border: 1px solid #374151;
+  background-color: #111827;
+  color: #e6eaf2;
+  border: 1px solid #2a3344;
 }
 
 body.dark-mode .status-log::-webkit-scrollbar-thumb,
@@ -731,7 +931,7 @@ body.dark-mode textarea::-webkit-scrollbar-track {
   font-size: 13px;
   padding: 0.5em;
   background: #f9f9f9;
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   color: #000;
 }
 
@@ -761,6 +961,38 @@ code {
   font-size: 0.95rem;
   vertical-align: middle;
   line-height: 1.2;
+}
+
+.input-error {
+  color: #d9534f;
+  font-size: 0.9rem;
+  margin-top: -4px;
+  min-height: 1.1rem;
+}
+
+body.dark-mode .input-error {
+  color: #ff8a80;
+}
+
+.alert {
+  border-radius: 6px;
+  border-left: 4px solid #f59e0b;
+  padding: 10px 12px;
+  background: #fff7ed;
+  color: #7c2d12;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin-top: var(--space-3);
+}
+
+.alert.warning {
+  border-color: #f59e0b;
+}
+
+body.dark-mode .alert {
+  background: #2b1f0f;
+  color: #fbbf24;
+  border-color: #f59e0b;
 }
 
 #nle-utilities .field-group input[readonly] {
@@ -872,30 +1104,6 @@ code {
   position: relative;
 }
 
-.info-icon .tooltip {
-  visibility: hidden;
-  width: 260px;
-  background-color: #000;
-  color: #fff;
-  text-align: left;
-  padding: 8px;
-  border-radius: 6px;
-  position: absolute;
-  z-index: 9999;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  font-size: 13px;
-}
-
-.info-icon:hover .tooltip,
-.info-icon:focus .tooltip {
-  visibility: visible;
-  opacity: 1;
-}
-
 #ingest-lock-wrapper input:disabled,
 #ingest-lock-wrapper select:disabled,
 #ingest-lock-wrapper textarea:disabled,
@@ -957,6 +1165,39 @@ code {
 .video-grid-3col.align-end {
   align-items: flex-end;
 }
+
+/* Advanced SCC & QC: left checkbox column + 2x3 grid on the right */
+.scc-advanced-top {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--space-4) var(--space-5);
+  margin-top: var(--space-4);
+}
+
+.scc-advanced-checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Checkbox rows shouldn't reserve label-bottom spacing */
+.scc-advanced-checks .form-item label {
+  margin-bottom: 0;
+}
+
+/* Right side: 2 rows x 3 columns (auto-wrap if needed) */
+.scc-advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+
+/* Responsive: stack on small widths */
+@media (max-width: 900px) {
+  .scc-advanced-top {
+    grid-template-columns: 1fr;
+  }
+}
 .video-grid-4col {
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));
@@ -968,6 +1209,11 @@ code {
   grid-template-columns: repeat(2, minmax(180px, 1fr));
   gap: var(--space-3) var(--space-5);  /* 12px rows, 24px columns */
   margin-top: var(--space-3);          /* 12px above */
+}
+
+/* SCC primary row: keep Start TC and Caption Alignment visually aligned */
+#scc-primary-row {
+  align-items: flex-end;
 }
 
 
@@ -1181,7 +1427,8 @@ code {
   position: relative;
   text-transform: uppercase;
 
-  overflow: hidden;   /* ✅ stop scrollbars */
+  overflow-y: auto;   /* sidebar scrolls only when it actually needs to */
+  overflow-x: hidden;
 }
 
 /* 📂 Draggable folder list */
@@ -1197,7 +1444,7 @@ code {
   display: flex;
   align-items: center;
   padding: 6px 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   border-radius: 4px;
   background-color: #f9f9f9;
   margin-bottom: 4px;
@@ -1440,7 +1687,7 @@ body.dark-mode .tree-row .tree-count {
 
 .tree-children {
   margin-left: 20px;
-  border-left: 1px dotted #ccc;
+  border-left: 1px dotted #d6dbe3;
   padding-left: 6px;
   display: none;
 }
@@ -1501,9 +1748,9 @@ input.compact {
   padding: var(--space-2);
   font-family: "Courier New", monospace;
   font-size: 1.1rem;
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   background: #fafcfd;
-  color: #1c1c1c;
+  color: #0b1220;
   text-align: center;
   box-sizing: border-box;
 }
@@ -1514,7 +1761,7 @@ input.compact {
 #transcode #audioDelay:focus {
   background: #667281;
   color: #f9fafb;
-  border-color: #3b82f6;
+  border-color: #3b6cff;
   outline: none;
 }
 
@@ -1584,7 +1831,7 @@ label[for="root-folder-name"] {
 }
 .status-table th,
 .status-table td {
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   padding: 4px 6px;
   text-align: center;
 }
@@ -1605,7 +1852,7 @@ label[for="root-folder-name"] {
 
 .form-section {
   margin-top: 2rem;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #d6dbe3;
   padding-top: 1rem;
 }
 .dependent-disabled {
@@ -1623,12 +1870,8 @@ label[for="root-folder-name"] {
 select.compact {
   min-width: 160px;
   max-width: 220px;
-  font-size: 0.95rem;
-}
-
-select.compact {
-  padding: 10px 16px; /* Match button */
-  height: 40px;        /* Or same as buttons */
+  height: var(--control-height);
+  padding: var(--control-padding-y) var(--control-padding-x);
   line-height: 1.2;
   font-size: 0.95rem;
   font-family: var(--font-ui);
@@ -1678,13 +1921,13 @@ select.compact {
   gap: var(--gap-sm);
 
   /* match h3 styles */
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #d6dbe3;
   padding-bottom: 0.25rem;
   margin-top: var(--space-6);           /* 1.5rem – section break */
   font-size: 1.1rem;
   font-family: var(--font-headings);
   font-weight: bold;
-  color: #1c1c1c;
+  color: #0b1220;
   width: 100%; /* ensures full underline */
 }
 
@@ -1699,235 +1942,172 @@ select.compact {
   flex: 1;              /* allows heading text to expand full width */
 }
 
+/* ================================
+   TOOLTIP SYSTEM — PANEL‑CENTERED
+   ================================ */
+
+/* Container that wraps the info icon + tooltip box */
 .tooltip-container {
   position: relative;
   display: inline-flex;
   align-items: center;
-  margin: 0 0 0 0.5rem;
+  margin-left: 0.5rem;
 }
 
+/* The ⓘ icon itself */
 .tooltip-container .icon {
   width: 20px;
   height: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 999px;
-  border: 1px solid currentColor;   /* always draw a circle, even if SVG is subtle */
-  box-sizing: border-box;
-  transition: transform 0.3s ease, filter 0.3s ease;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-/* Make tooltip icons clearly visible in both themes */
-body:not(.dark-mode) .tooltip-container .icon {
-  color: #111827;          /* dark gray on light background */
-  border-color: #111827;
-}
+/* 
+   PANEL‑CENTERED TOOLTIP
 
-body.dark-mode .tooltip-container .icon {
-  color: #f9fafb;          /* near-white on dark background */
-  border-color: #f9fafb;
-}
-
-/* Extra insurance for the top toolbar version */
-#panel-toolbar .tooltip-container .icon {
-  color: #f9fafb;
-  border-color: #f9fafb;
-}
-
-.tooltip-container .icon svg {
-  transition: transform 0.5s ease-in-out;
-}
-
-.tooltip-container .icon:hover svg {
-  transform: rotate(360deg) scale(1.2);
-}
-
+   – Always appears in the CENTER of the main panel area
+     (panel = viewport minus 230px sidebar and 38px titlebar)
+   – Width expands to fill available panel space
+   – Max height so it never gets cut off; internal scroll if needed
+*/
 .tooltip {
-  visibility: hidden;
-  width: max-content;
-  max-width: 400px;
+  position: fixed;
+  z-index: 20000;
+
+  /* center of content area (not under the titlebar / sidebar) */
+  top: calc(50vh + 19px);          /* 19px = 38px / 2 (titlebar height / 2) */
+  left: calc(50vw + 115px);        /* 115px = 230px / 2 (sidebar width / 2) */
+  transform: translate(-50%, -50%);
+
   background-color: #000;
   color: #fff;
-  font-family: 'Courier New', monospace;
-  font-weight: normal;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.4;
   text-align: left;
-  border-radius: 5px;
-  padding: 20px;
-  position: absolute;
-  z-index: 9999;
-  top: 50%;
-  bottom: auto;
-  right: calc(100% + 10px);
-  left: auto;
-  opacity: 0;
-  transform: translateY(-50%) translateX(-10px);
-  transition: opacity 0.5s, transform 0.5s;
-  white-space: pre-line; /* allow \n in JS template strings */
-  overflow-wrap: break-word;
-}
+  font-weight: 400; /* force normal body weight; don't inherit bold from headings */
+  
+  padding: 1.1rem 1.4rem;
+  border-radius: 6px;
+  box-sizing: border-box;
 
-/* 🔧 Make Drive Tests tooltip 50% wider */
-#speedtest-info-tooltip.tooltip {
-  max-width: 600px !important;
-  width: 600px !important;
-}
+  /* PANEL-CENTERED TOOLTIP — keep a stable width, only shrink when the window is truly narrow */
+  width: min(576px, calc(100vw - 40px));  /* prefers 576px, only shrinks on truly narrow windows */
+  max-width: none;
+  min-width: 288px;                       /* never collapse to a skinny column */
 
-/* Make ALL top panel overview tooltips share the same wide width */
-#automation-requirements-tooltip.tooltip,
-#ingest-overview-tooltip.tooltip,
-#transcode-overview-tooltip.tooltip,
-#project-organizer-overview-tooltip.tooltip,
-#nle-overview-tooltip.tooltip,
-#preferences-overview-tooltip.tooltip,
-#transcribe-overview-tooltip.tooltip,
-#log-viewer-overview-tooltip.tooltip,
-#speed-test-overview-tooltip.tooltip {
-  max-width: 600px;
-  width: 600px;
+  /* Don’t let it go off the top/bottom – scroll inside if too tall */
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+
   white-space: normal;
+  overflow-wrap: break-word;
+
+  /* hidden by default */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-/* Center icon + tooltip at top of Log Viewer + Speed Test panels */
-#log-viewer .panel-toolbar-controls,
-#speed-test .panel-toolbar-controls {
-  position: relative; /* anchor for absolute centering */
-  overflow: visible;  /* let tooltips escape the toolbar row */
-  z-index: 5;        /* keep tooltip containers above sibling content */
+/* All tooltips (overview + inline) use the same centered behavior */
+.tooltip-bottom {
+  /* class kept so HTML doesn’t break, no extra geometry needed */
 }
 
-/* Center the tooltip container (icon + box) over the panel */
-#log-viewer .panel-toolbar-controls .tooltip-container,
-#speed-test .panel-toolbar-controls .tooltip-container {
-  position: absolute;   /* take it out of the flex flow */
+/* Show tooltip when the icon (or its container) is hovered/focused */
+.tooltip-container:hover .tooltip,
+.tooltip-container:focus-within .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Arrow – visual only, centered on the top edge of the box */
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 0;
   left: 50%;
-  transform: translateX(-50%); /* dead center in the panel width */
-  z-index: 6;          /* ensure hover area sits above panel content */
-  top: 0;              /* align with the top of the toolbar */
+  transform: translate(-50%, -100%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #000 transparent;
 }
 
-.panel-section .panel-toolbar-controls h2 {
-  margin: 0;
-}
-
-/* === Enhanced Tooltip Content Styling === */
-.tooltip-content {
-  font-family: "Courier New", monospace;
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-}
-
+/* Optional structure styling INSIDE tooltip content */
 .tooltip-header {
   font-weight: bold;
-  font-size: 1rem;
-  color: #3b82f6; /* Lead AE blue */
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.5);
-  padding-bottom: 0.25rem;
-  margin-bottom: 0.25rem;
-
-  /* ✅ Center header text cleanly */
-  text-align: center;
-  width: 100%;
-  display: block;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  color: #274bdb; /* blue header text in light mode */
+  border-bottom: 1px solid rgba(37, 99, 235, 0.6); /* blue underline */
 }
 
-/* === Enhanced Proxy Tooltip Layout === */
 .tooltip-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: 8px;
 }
 
 .tooltip-subtitle {
   font-weight: bold;
   font-size: 0.9rem;
-  color: #60a5fa;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  margin-bottom: 2px;
 }
 
 .tooltip-path {
-  font-family: "Courier New", monospace;
+  font-family: var(--font-mono, "Courier New", monospace);
   font-size: 0.85rem;
-  color: #d1d5db;
-  word-break: break-all;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-
-body.dark-mode .tooltip-path {
-  color: #111;
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.tooltip-section:last-child {
-  margin-bottom: 0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background-color: #111827;
+  color: #e5e7eb;
+  display: inline-block;
 }
 
 .tooltip-list {
-  list-style-type: disc;
-  margin: 0;
-  padding-left: 1.2rem;
+  margin: 4px 0 0 0;
+  padding-left: 1.1rem;
   font-size: 0.9rem;
-  color: #e5e7eb;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .tooltip-list li {
-  margin-bottom: 0.3rem;
+  margin-bottom: 2px;
 }
 
 /* Dark Mode refinement */
+body.dark-mode .tooltip {
+  background-color: #fff;
+  color: #000;
+}
+
+body.dark-mode .tooltip::after {
+  border-color: transparent transparent #fff transparent;
+}
+
 body.dark-mode .tooltip-header {
   color: #60a5fa;
   border-bottom-color: rgba(96, 165, 250, 0.4);
 }
 
 body.dark-mode .tooltip-list {
-  color: #000; /* tooltip bg is white in dark mode */
+  color: #000;
 }
 
-.tooltip::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  margin-top: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: transparent transparent transparent #000;
+/* Log Viewer headings reuse the global .heading-with-tooltip layout */
+.panel-section .panel-toolbar-controls h2 {
+  margin: 0;
 }
 
-.tooltip-container:hover .tooltip {
-  visibility: visible;
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
+
+/* Log Viewer: hide custom range inputs when not needed */
+#log-viewer input[type="date"].hidden {
+  display: none !important;
 }
 
-.tooltip-bottom {
-  top: calc(100% + 10px);
-  bottom: auto;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-}
-
-.tooltip-bottom::after {
-  top: auto;
-  bottom: 100%;
-  left:50%;
-  margin-left: -5px;
-  margin-top: 0;
-  border-color: transparent transparent #000 transparent;
-}
-
-.tooltip-container:hover .tooltip-bottom {
-  transform: translateX(-50%);
+body.dark-mode #log-viewer input[type="date"].hidden {
+  display: none !important;
 }
 
 /* Log Viewer: place header copy at top-left while keeping icon centered */
@@ -1985,9 +2165,9 @@ body.dark-mode .tooltip-list {
   padding: 0.5rem 2rem 0.5rem 0.5rem;
   font-family: "Courier New", monospace;
   font-size: 1.1rem;
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   background: #fafcfd;
-  color: #1c1c1c;
+  color: #0b1220;
   text-align: center;
 }
 
@@ -1996,8 +2176,16 @@ body.dark-mode .tooltip-list {
 .chosen-value.open {
   background: #667281;
   color: #f9fafb;
-  border-color: #3b82f6;
+  border-color: #3b6cff;
 }
+
+.lut-dropzone .chosen-value { cursor: pointer; }
+.lut-dropzone.dragover .chosen-value {
+  border-color: #3b6cff;
+  background: #667281;
+  color: #f9fafb;
+}
+.lut-dropzone .chosen-value:disabled { cursor: not-allowed; }
 
 .value-list {
   position: absolute;
@@ -2018,7 +2206,7 @@ body.dark-mode .tooltip-list {
 
 /* Only show border when dropdown is open */
 .value-list.open {
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   max-height: 160px;
   overflow-y: auto;
 }
@@ -2045,7 +2233,7 @@ body.dark-mode .tooltip-list {
   transform: translateY(-50%) rotate(45deg);
   pointer-events: none;
   transition: transform 0.2s ease;
-  color: #1c1c1c;
+  color: #0b1220;
 }
 
 .dropdown-wrapper.open .dropdown-arrow,
@@ -2055,7 +2243,7 @@ body.dark-mode .tooltip-list {
 
 /* Base progress element */
 progress[value] {
-  width: 12.5em;
+  width: 100%;
   height: 0.25em;
   border: none;
   border-radius: 0.125em;
@@ -2123,79 +2311,6 @@ output:not(:empty)::after {
   content: '%';
 }
 
-/* === Reconnect Button (custom round design) === */
-.container {
-  width: 3em;
-  height: 3em;
-  position: relative;
-}
-
-.container input {
-  display: none;
-}
-
-.button {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 4px solid #090909;
-  background-color: transparent;
-  background-image: linear-gradient(145deg, #171717, #444245);
-  box-sizing: border-box;
-  box-shadow: inset 2px 2px 0 #7d7c7e, inset -2px -2px 0px #1c1c1c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-label.button[for="reconnect-checkbox"][data-state="connected"] {
-  cursor: not-allowed;
-}
-
-.button .icon {
-  width: 25px;
-  height: 25px;
-  display: inline-block;
-}
-
-.button .icon svg {
-  height: 100%;
-  width: 100%;
-  fill: #a5a5a5;
-}
-
-#reconnect-checkbox:checked + .button {
-  box-shadow: inset -1px -1px 0 #5e5e5e, inset 1px 1px 0 #1c1c1c;
-  border: 2px solid rgb(125, 115, 243);
-  animation: animeBorder 0.3s linear alternate-reverse infinite;
-}
-
-#reconnect-checkbox:checked + .button .icon svg {
-  fill: rgb(125, 115, 243);
-  animation: animeFill 0.3s linear alternate-reverse infinite;
-}
-
-/* ✅ Always hide the reconnect checkbox — prevents ghost checkbox above button */
-#reconnect-checkbox {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-@keyframes animeFill {
-  to {
-    fill: rgb(125, 115, 243);
-  }
-}
-
-@keyframes animeBorder {
-  to {
-    border-color: rgb(125, 115, 243);
-  }
-}
-
 /* ==============================================
    🖱️ Universal Pointer Cursor for Clickable Items
    ============================================== */
@@ -2218,8 +2333,8 @@ input[type="radio"] {
 
 /* 🌙 Dark Mode Overrides */
 body.dark-mode {
-  background-color: #0f172a;
-  color: #e5e7eb;
+  background-color: #060913;
+  color: #e6eaf2;
 }
 
 body.dark-mode .section {
@@ -2229,54 +2344,64 @@ body.dark-mode .section {
 }
 
 body.dark-mode .sidebar {
-  background-color: #0f172a;
-  color: #e5e7eb;
+  background-color: #060913;
+  color: #e6eaf2;
 }
 
-body.dark-mode .sidebar li:hover,
-body.dark-mode .sidebar li.active {
-  background-color: #2563eb;
+body.dark-mode button:not(.button) {
+  background: linear-gradient(145deg, #2a3f7f, #121a33);
+}
+
+/* Dark mode: Uiverse panel buttons should keep white text (match the rest of the UI) */
+body.dark-mode .button {
   color: #fff;
-  border-radius: 6px;
 }
 
-body.dark-mode button {
-  background: linear-gradient(145deg, #1e293b, #020617);
-  color: #f9fafb;
+body.dark-mode .button:hover {
+  color: #fff;
 }
 
-body.dark-mode .btn-danger {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger-text);
-}
 
-body.dark-mode .btn-danger:hover {
-  background-color: var(--color-danger-hover-bg);
-  color: var(--color-danger-hover-text);
-}
 
+/* Dark mode: Uiverse panel button outline should match the text box border */
+body.dark-mode .button::before,
+body.dark-mode .button::after {
+  border-color: #2a3344;
+}
 /* 🎛️ CRF Input — Dark Mode Styling */
 body.dark-mode #transcode #crf,
 body.dark-mode #transcode #audioDelay {
-  background: #111827;
-  color: #f9fafb;
-  border: 1px solid #374151;
+  background: #060913;
+  color: #e6eaf2;
+  border: 1px solid #2a3344;
 }
 
 body.dark-mode #transcode #crf:hover,
 body.dark-mode #transcode #crf:focus,
 body.dark-mode #transcode #audioDelay:hover,
 body.dark-mode #transcode #audioDelay:focus {
-  background: #374151;
-  border-color: #60a5fa;
-  color: #f9fafb;
+  background: #2a3344;
+  border-color: #3b6cff;
+  color: #e6eaf2;
 }
 
 body.dark-mode input,
 body.dark-mode select {
   background-color: #111827;
-  color: #f9fafb;
-  border: 1px solid #374151;
+  color: #e6eaf2;
+  border: 1px solid #2a3344;
+}
+
+/* Light Mode – make disabled controls clearly greyed out */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: #e5e7eb;   /* light grey */
+  color: #9ca3af;              /* muted text */
+  border-color: #404c5d;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 body.dark-mode button:disabled,
@@ -2303,23 +2428,10 @@ body.dark-mode label {
   color: #f9fafb;
 }
 
-body.dark-mode .tooltip {
-  background-color: #fff;
-  color: #000;
-}
-
-body.dark-mode .tooltip::after {
-  border-color: transparent transparent transparent #fff;
-}
-
-body.dark-mode .tooltip-bottom::after {
-  border-color: transparent transparent #fff transparent;
-}
-
 body.dark-mode .panel-section h3,
 body.dark-mode .panel-section details > summary {
-  color: #f9fafb;
-  border-bottom: 1px solid #4b5563;
+  color: #ffffff;
+  border-bottom: 1px solid #2a3344;
   list-style: none;
 }
 
@@ -2373,7 +2485,7 @@ body.dark-mode #transcode-summary-fill {
 
 body.dark-mode #preferences select#theme-select {
   background-color: #1e293b;
-  border-color: #3b82f6;
+  border-color: #3b6cff;
 }
 
 body.dark-mode .chosen-value {
@@ -2507,118 +2619,127 @@ body.dark-mode .dropdown-arrow {
 }
 
 /* ============================================
-   LEAD AE — Sidebar "SupportHotline" nav button
-   Scoped & collision-free
-   ============================================ */
-
-/* Per-sidebar palette tokens (dark defaults) */
-.sidebar {
-  --lae-nav-bg: linear-gradient(to bottom, #1e293b, #0b1220);
-  --lae-nav-bg-hover: linear-gradient(to bottom, #243447, #0c1322);
-  --lae-nav-bg-active: linear-gradient(to bottom, #1b2a3b, #0a111d);
-  --lae-nav-border: #0b1220;
-  --lae-nav-border-active: #3b82f6;    /* brand blue */
-  --lae-nav-fg: #e5e7eb;              /* slate-200 */
-  --lae-nav-fg-hover: #f1f5f9;
-  --lae-nav-fg-active: #ffffff;
-
-  /* shadow stack tuned for LEAD AE palette */
-  --lae-nav-shadow-outer: 0 6px 16px -10px rgba(59, 130, 246, 0.45);
-  --lae-inset-1: inset 0 -6px 18px -6px rgba(3, 15, 20, 0);
-  --lae-inset-2: inset rgba(30, 41, 59, 0.95) -1px -1px 6px 0px;
-  --lae-inset-L: inset 12px 0px 12px -6px rgba(3, 15, 20, 0);
-  --lae-inset-R: inset -12px 0px 12px -6px rgba(3, 15, 20, 0);
-}
-
-/* Light mode palette overrides */
-body:not(.dark-mode) .sidebar {
-  --lae-nav-bg: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
-  --lae-nav-bg-hover: linear-gradient(to bottom, #dce3ec, #c2cedb);
-  --lae-nav-bg-active: linear-gradient(to bottom, #d2dae3, #bac7d5);
-  --lae-nav-border: #0f172a;
-  --lae-nav-border-active: #3b82f6;
-  --lae-nav-fg: #0f172a;
-  --lae-nav-fg-hover: #0b1220;
-  --lae-nav-fg-active: #000000;
-  --lae-nav-shadow-outer: 0 6px 14px -8px rgba(15, 23, 42, 0.25);
-}
-
-/* ============================================
-   LEAD AE — Sidebar Buttons (Internal 3D Shadows)
+   LEAD AE — Sidebar Navigation (Text + Right‑Side Toggle)
+   No button chrome — text uses the same font styling as <button>
    ============================================ */
 
 .sidebar ul > li.tab.lae-navbtn {
   list-style: none;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 
   width: 100%;
-  margin: 0 0 var(--space-3) 0;  /* 12px – on the spacing scale */
-  padding: 0.4em 0.6em;
+  min-height: 50px;               /* match previous button hit-area */
+  margin: 0 0 var(--space-3) 0;   /* 12px – on the spacing scale */
+  padding: 0.4em 0.1em;
   box-sizing: border-box;
-  border-radius: 0.25em;
 
-  background: var(--lae-nav-bg);
-  color: var(--lae-nav-fg);
+  /* ❌ No button visuals */
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 
-  font-family: var(--font-mono, "Courier New", monospace);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  /* ✅ Match global <button> text styling */
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
   text-decoration: none;
-  text-align: center;
+  text-align: left;
   line-height: 1.15;
 
-  border: 1px solid var(--lae-nav-border);
-
-  /* ✅ Internal 3D lighting only */
-  box-shadow:
-    inset 0 6px 10px -4px rgba(255, 255, 255, 0.08),   /* top highlight */
-    inset 0 -6px 10px -4px rgba(0, 0, 0, 0.5);         /* bottom shadow */
-
-  transition:
-    box-shadow 0.25s ease,
-    background-color 0.25s ease,
-    transform 0.2s ease,
-    border-color 0.25s ease,
-    color 0.2s ease;
+  color: #f9fafb;
 }
 
-/* Hover & Active states */
 .sidebar ul > li.tab.lae-navbtn:hover,
 .sidebar ul > li.tab.lae-navbtn.active {
-  background: var(--lae-nav-bg-hover);
-  color: var(--lae-nav-fg-hover);
-  border-color: var(--lae-nav-border-active);
-  box-shadow:
-    inset 0 6px 10px -4px rgba(255, 255, 255, 0.12),
-    inset 0 -6px 10px -4px rgba(0, 0, 0, 0.65);
+  background: none;
+  background-color: transparent;
+  border-radius: 0;
+  color: #d6d6d6; /* same hover/active text color as <button> */
 }
 
-/* Pressed look (more depth) */
 .sidebar ul > li.tab.lae-navbtn:active {
-  background: var(--lae-nav-bg-active);
-  color: var(--lae-nav-fg-active);
-  box-shadow:
-    inset 0 2px 6px -2px rgba(0, 0, 0, 0.8),
-    inset 0 -2px 6px -2px rgba(255, 255, 255, 0.05);
+  color: #d6d6d6;
 }
 
-/* Text micro-animation (same as before) */
 .sidebar ul > li.tab.lae-navbtn .lae-navbtn__text {
-  display: inline-block;
-  transition: transform 0.2s ease;
-  will-change: transform;
+  flex: 1 1 auto;
+  display: block;
 }
 
-.sidebar ul > li.tab.lae-navbtn:hover .lae-navbtn__text { transform: scale(0.96); }
-.sidebar ul > li.tab.lae-navbtn:active .lae-navbtn__text { transform: scale(0.92); }
+/* ============================================
+   LEAD AE — Sidebar Toggle (Uiverse hamburger)
+   Scoped to .lae-navtoggle* (collision-safe)
+   ~50% scale vs original
+   ============================================ */
+
+.sidebar ul > li.tab.lae-navbtn .lae-navtoggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Toggle is a visual indicator — clicks should go to the tab row */
+  pointer-events: none;
+}
+
+/* Hide the checkbox entirely (state only; controlled by JS) */
+.lae-navtoggle-check {
+  display: none !important;
+  appearance: none !important;
+}
+
+/* ~50% size vs the original 70x58 */
+.lae-navtoggle-label {
+  width: 35px;
+  height: 29px;
+  display: block;
+  position: relative;
+}
+
+/* 3 bars */
+.lae-navtoggle-line {
+  width: 35px;
+  height: 3px;
+  background-color: currentColor; /* follows the tab text color */
+  position: absolute;
+  left: 0;
+  border-radius: 999px;
+  transition: 0.3s;
+}
+
+.lae-navtoggle-line1 { top: 0;  transition: all .3s; }
+.lae-navtoggle-line2 { top: 9px; }
+.lae-navtoggle-line3 { top: 18px; }
+
+/* Checked animation (scaled translation values) */
+.lae-navtoggle-check:checked + .lae-navtoggle-label .lae-navtoggle-line1 {
+  transform: rotate(35deg) scaleX(.55) translate(19.5px, -2.25px);
+  border-radius: 50px 50px 50px 0;
+}
+
+.lae-navtoggle-check:checked + .lae-navtoggle-label .lae-navtoggle-line3 {
+  transform: rotate(-35deg) scaleX(.55) translate(19.5px, 2.25px);
+  border-radius: 0 50px 50px 50px;
+}
+
+.lae-navtoggle-check:checked + .lae-navtoggle-label .lae-navtoggle-line2 {
+  border-top-right-radius: 50px;
+  border-bottom-right-radius: 50px;
+  width: 23px; /* ~50% of original 45px */
+}
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .sidebar ul > li.tab.lae-navbtn,
-  .sidebar ul > li.tab.lae-navbtn .lae-navbtn__text {
+  .lae-navtoggle-line,
+  .lae-navtoggle-line1,
+  .lae-navtoggle-line2,
+  .lae-navtoggle-line3 {
     transition: none;
   }
 }
@@ -2853,48 +2974,46 @@ body:not(.dark-mode) .sidebar {
   to { transform: rotate(-1turn); }
 }
 
-/* 🧭 Adobe Automate Controls Row Layout — Final Fixed */
-.adobe-controls-row {
+/* UNIFIED CENTERED CONTROL ROW */
+.adobe-controls-row,
+#ingest-lock-controls,
+#transcode-controls-row,
+#speedtest-controls-row,
+#transcribe-controls-row,
+#project-organizer-controls-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.75rem;
-  flex-wrap: nowrap;
   width: 100%;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  position: relative; /* allows perfect centering */
 }
 
-#loader-inline {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  margin-left: 0.5rem;
+#speedtest-controls-row {
+  flex-wrap: nowrap;
 }
 
-#adobe-progress {
-  width: 250px;
-  height: 0.25em;
-  border: none;
-  border-radius: 0.125em;
-  background: transparent;
-  vertical-align: middle;
-}
-
-/* Ingest & Transcode inline loaders: match #loader-inline from Adobe Automate */
+/* Unified loader wrappers: take available space and center contents */
+#loader-inline,
 #ingest-loader-inline,
 #transcode-loader-inline,
 #speedtest-loader-inline,
 #transcribe-loader-inline {
+  flex: 1;                 /* occupy space between buttons and hamster */
   display: flex;
+  justify-content: center; /* center progress / status */
   align-items: center;
-  gap: var(--gap-sm);
-  margin-left: 0.5rem;
+  gap: 0.5rem;
 }
 
-/* Keep the thin, unobtrusive progress bar */
+/* All progress bars behave like the Drive Test bar */
+#adobe-progress,
 #ingest-progress,
 #transcode-progress,
 #speedtest-progress {
-  width: 250px;
+  width: 100%;
+  max-width: 400px;          /* unified max width for all bars */
+  margin: 0 auto;            /* center inside the flex slot */
   height: 0.25em;
   border: none;
   border-radius: 0.125em;
@@ -2906,7 +3025,8 @@ body:not(.dark-mode) .sidebar {
 #ingest-loader-inline output,
 #transcode-loader-inline output,
 #speedtest-loader-inline output,
-#transcribe-loader-inline output {
+#transcribe-loader-inline output,
+#project-organizer-loader-inline output {
   font-size: 0.9rem;
   font-family: monospace;
   color: var(--progress-accent-text);
@@ -2956,13 +3076,22 @@ body:not(.dark-mode) .sidebar {
   top: -0.15em;
 }
 
-/* 🧭 Adobe Automate Controls Row Layout — Final 40% Scale Alignment */
-#cep-job-status {
-  margin-left: auto;
+/* Keep hamsters anchored to the right edge */
+#ingest-job-status,
+#transcode-job-status,
+#speedtest-job-status,
+#transcribe-job-status,
+#cep-job-status,
+#project-organizer-job-status {
+  margin-left: auto !important;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
 
+/* 🧭 Adobe Automate Controls Row Layout — Final 40% Scale Alignment */
+#cep-job-status {
   /* sized exactly for a 0.4-scaled 12em wheel (~4.8em visual size ≈ 75–80 px) */
   width: 90px;
   height: 90px;
@@ -2990,22 +3119,20 @@ body:not(.dark-mode) .sidebar {
 #ingest-job-status,
 #transcode-job-status,
 #speedtest-job-status,
-#transcribe-job-status {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+#transcribe-job-status,
+#project-organizer-job-status {
   width: 90px;   /* sized for a scaled 12em wheel */
   height: 90px;
   overflow: visible;
   position: relative;
 }
 
-/* Center and scale hamster like Adobe Automate */
+/* Center and scale hamster like Adobe Automate + Speed Test (all panels unified) */
 #ingest-job-status .wheel-and-hamster,
 #transcode-job-status .wheel-and-hamster,
 #speedtest-job-status .wheel-and-hamster,
-#transcribe-job-status .wheel-and-hamster {
+#transcribe-job-status .wheel-and-hamster,
+#project-organizer-job-status .wheel-and-hamster {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -3257,7 +3384,7 @@ body.subtitle-editor-window .subtitle-editor {
   position: fixed;
   inset: 8px;
   background: #fff;
-  border: 1px solid #ccc;
+  border: 1px solid #d6dbe3;
   box-shadow: 0 6px 18px rgba(0,0,0,.2);
   /* Ensure overlay sits above any app chrome */
   z-index: 3000;
@@ -3305,12 +3432,6 @@ body.subtitle-editor-window #subtitle-editor-overlay .toolbar {
   font-size: 14px;
   padding: 0 0.75rem;
 }
-
-/* SCC alignment control — hidden unless SCC is selected */
-#scc-align-row   { display:none; align-items:center; gap:0.5rem; }
-
-/* SCC channel control — hidden unless SCC is selected */
-#scc-channel-row { display:none; align-items:center; gap:0.5rem; }
 
 /* SCC row policy control — hidden unless SCC/CAP is selected */
 #scc-row-policy-row {
@@ -3407,14 +3528,14 @@ body.dark-mode .subtitle-editor .preview-video-host { border-color: #374151; }
 }
 .safe-title-overlay .col-hit { cursor: crosshair; background: transparent; height: 100%; }
 .safe-title-overlay .placement-marker {
-  position: absolute; width: 2px; height: 14px; background: #3b82f6;
+  position: absolute; width: 2px; height: 14px; background: #3b6cff;
   transform: translate(-1px, -50%); z-index: 6; pointer-events: none;
 }
 .safe-title-overlay .row-guide {
   position: absolute; left: 0; right: 0; height: 0;
   border-top: 1px dashed rgba(0,0,0,.35);
 }
-.safe-title-overlay .row-guide.highlight { border-top-style: solid; border-top-color: #3b82f6; }
+.safe-title-overlay .row-guide.highlight { border-top-style: solid; border-top-color: #3b6cff; }
 .safe-title-overlay .row-label {
   position: absolute; right: 6px; top: 0; transform: translateY(-50%);
   font-family: var(--font-mono); font-size: 12px; line-height: 1;
@@ -3529,4 +3650,152 @@ body.dark-mode .subtitle-editor #subtitle-editor-status.text-error {
   background: rgba(0,0,0,.55);
   border-radius: 4px;
   pointer-events: none;
+}
+#speedtest-network-job-status {
+  position: relative;        /* anchor for absolute wheel */
+  width: 90px;               /* match all other hamster containers */
+  height: 90px;              /* fixed box prevents pushing layout */
+  flex-shrink: 0;            /* never collapse */
+  overflow: visible;         /* allow wheel to spill out */
+  margin-left: auto;         /* pushes the hamster to the far right like all other panels */
+}
+
+#network-test-inline-status {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem;
+  text-align: center;
+  visibility: hidden;        /* reserve space without showing text until active */
+  color: #e2e8f0;
+}
+
+body.dark-mode #network-test-inline-status {
+  color: #cbd5f5;
+}
+
+#speedtest-network-job-status .wheel-and-hamster {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.4);
+  transform-origin: center;
+  margin: 0;
+  width: 12em;
+  height: 12em;
+  font-size: 14px;
+}
+
+/* =============================
+   NLE UTILITIES – AI ASSISTANTS
+   ============================= */
+
+/* Layout for the three NLE cards */
+.nle-assistants-row {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+/* Simple container just for layout */
+.nle-assist-container {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* From Uiverse.io by e-coders – scoped ONLY to NLE link buttons */
+.nle-assist-button {
+  appearance: none;
+  background-color: #f7f7f7;
+  border: 0.125em solid #1A1A1A;
+  border-radius: 0.9375em;
+  box-sizing: border-box;
+  color: #1A1A1A;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: Roobert, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol";
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  margin: 0;
+  outline: none;
+  text-align: center;
+  text-decoration: none;
+  transition: all 300ms cubic-bezier(.23, 1, 0.32, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  will-change: transform;
+
+  /* Square and larger than the old cards */
+  width: 9rem;
+  height: 9rem;
+  padding: 1.25rem;
+}
+
+/* Keep NLE buttons from shrinking when the panel gets narrow */
+.nle-assistants-row .nle-assist-button {
+  flex-shrink: 0;
+}
+
+.nle-assist-button:hover {
+  color: #fff;
+  background-color: #1A1A1A;
+  box-shadow: rgba(0, 0, 0, 0.25) 0 8px 15px;
+  transform: translateY(-2px);
+}
+
+.nle-assist-button:active {
+  background-color: #111111;
+  color: #ffffff;
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.nle-assist-label {
+  display: block;
+  text-align: center;
+  margin-bottom: 0.75em;
+}
+
+.nle-assist-logo {
+  max-width: 60%;
+  height: auto;
+  filter: brightness(0) saturate(100%);
+}
+
+.nle-assist-button:hover .nle-assist-logo,
+.nle-assist-button:active .nle-assist-logo {
+  filter: invert(1);
+}
+
+/* Disabled state still controlled via `.disabled` class from JS */
+.nle-assist-button.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+/* 🔧 Hard-lock root scrolling: only panels are allowed to scroll */
+html,
+body {
+  height: 100%;
+  overflow: hidden !important;  /* no app-level scrollbar, ever */
+}
+
+/* 🔧 Speed Test: summary boxes should NOT scroll independently */
+#speed-test .status-log {
+  max-height: none;
+  overflow-y: visible;
 }

@@ -23,23 +23,55 @@
   }
 
   let BASE_URL = 'http://127.0.0.1:32123';
-  let TOKEN = 'supersecret123'; // default; overridden by bridge credentials
+  let TOKEN = null;
+  let tokenSource = null;
+  let tokenWarningLogged = false;
   const MATCH_SOURCE_SENTINEL = 'match-source-ffmpeg';
+
+  function warnIfEnvToken(creds = {}) {
+    const suppliedToken = window.process?.env?.CEP_BRIDGE_TOKEN;
+    const isEnvToken = creds.tokenSource === 'env' || suppliedToken === creds.token;
+    if (isEnvToken && !tokenWarningLogged) {
+      tokenWarningLogged = true;
+      setUILog(
+        '⚠️ Using CEP_BRIDGE_TOKEN from the environment. Rotate if this was a shared or weak secret.',
+        { isError: true }
+      );
+      debugLog('⚠️ Using user-supplied CEP_BRIDGE_TOKEN; ensure it is rotated if reused.');
+    }
+  }
 
   async function initBridgeCredentials() {
     try {
-      if (!window.electron || !window.electron.invoke) return;
+      if (!window.electron || !window.electron.invoke) {
+        setUILog('❌ Bridge credentials unavailable: IPC not ready.', { isError: true });
+        return { ok: false, reason: 'ipc_unavailable' };
+      }
+
       const creds = await window.electron.invoke('bridge:get-credentials');
       if (creds && creds.port) {
         BASE_URL = `http://127.0.0.1:${creds.port}`;
       }
       if (creds && creds.token) {
         TOKEN = creds.token;
+        tokenSource = creds.tokenSource || null;
+        warnIfEnvToken({ tokenSource: tokenSource, token: TOKEN });
+        return { ok: true };
       }
+
+      TOKEN = null;
+      tokenSource = null;
+      setUILog('❌ Bridge credentials missing; cannot connect to Assist bridge.', {
+        isError: true
+      });
+      return { ok: false, reason: 'missing_token' };
     } catch (err) {
-      try {
-        console.warn('⚠️ Failed to load bridge credentials; using defaults', err);
-      } catch {}
+      TOKEN = null;
+      tokenSource = null;
+      setUILog(`❌ Failed to load bridge credentials: ${err?.message || err}`, {
+        isError: true
+      });
+      return { ok: false, reason: err?.message || 'credential_error' };
     }
   }
 
@@ -62,37 +94,46 @@
   if (reqTooltip) {
     reqTooltip.innerHTML = `
       <div class="tooltip-content">
-        <div class="tooltip-header">Automation Requirements</div>
-        <ul class="tooltip-list">
-          <li>Adobe Premiere Pro must be open with a project loaded.</li>
-          <li>The Lead AE Assist CEP panel must be open and connected.</li>
-        </ul>
+        <div class="tooltip-header">ADOBE AUTOMATE — Technical Overview</div>
 
         <div class="tooltip-section">
-          <span class="tooltip-subtitle">What this panel is for</span>
+          <span class="tooltip-subtitle">Requirements / environment</span>
           <ul class="tooltip-list">
-            <li>Securely copy camera cards or source drives to a project volume.</li>
-            <li>Optionally build Premiere bins to match your folder plan.</li>
-            <li>Create edit-friendly proxies and attach them back to the master clips.</li>
-            <li>Log each job for later audit, checksums, and automation hand-off.</li>
+            <li>Adobe Premiere Pro must be open with a project loaded.</li>
+            <li>The Lead AE Assist CEP panel must be open and connected to the Assist bridge.</li>
           </ul>
         </div>
 
         <div class="tooltip-section">
-          <span class="tooltip-subtitle">Quick workflow</span>
+          <span class="tooltip-subtitle">Core capabilities</span>
           <ul class="tooltip-list">
-            <li><strong>Input</strong> - select the card/folder you want to ingest.</li>
-            <li><strong>Output</strong> - choose the destination (and proxy folder if needed).</li>
-            <li><strong>Options</strong> - pick import, bin creation, proxies, and verification.</li>
-            <li><strong>Automation</strong> - enable webhook logging if you want n8n/ops alerts.</li>
-            <li><strong>Run</strong> - click <em>Automate</em> and monitor progress + summary below.</li>
+            <li>Drives ingest from Assist into Premiere in one pass (copy, import, bin creation, proxies).</li>
+            <li>Can attach proxies to master clips using either AME presets or FFmpeg match-source mode.</li>
+            <li>Writes structured job logs and optional webhooks for automation / monitoring.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Inputs / outputs</span>
+          <ul class="tooltip-list">
+            <li>Inputs: one or more source cards / folders, an ingest destination, and optional proxy path.</li>
+            <li>Outputs: verified copies, optional Premiere bins, proxies attached back to master clips, and logs.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Under the hood</span>
+          <ul class="tooltip-list">
+            <li>Orchestrates Assist’s ingest / transcode engines plus a CEP JSX layer inside Premiere.</li>
+            <li>Communicates with the desktop bridge over a local WebSocket secured with a runtime token.</li>
+            <li>Falls back to FFmpeg for proxy generation when AME is unavailable or fails (unless disabled).</li>
           </ul>
         </div>
       </div>
     `;
   }
 
-  const verTooltip = document.querySelector('#adobe-utilities #verification-logging-tooltip');
+  const verTooltip = document.getElementById('verification-logging-tooltip');
   if (verTooltip) {
     verTooltip.innerHTML = `
       <div class="tooltip-content">
@@ -269,6 +310,10 @@
   const state = window.watchConfigs?.adobeUtilities || {};
   window.watchConfigs = window.watchConfigs || {};
   window.watchConfigs.adobeUtilities = state;
+  state.sources = Array.isArray(state.sources) ? state.sources : [];
+  state.expandedSources = Array.isArray(state.expandedSources)
+    ? state.expandedSources
+    : state.sources.slice();
   // Default for new flag
   if (typeof state.disableFfmpegFallback !== 'boolean') {
     state.disableFfmpegFallback = false;
@@ -794,6 +839,7 @@
   // === Adobe Automate Cancel Support ===
   let currentJobId = null;
   let currentJobStage = null;
+  let isCancelling = false;
   // ⛳️ One-shot latch so the panel only resets once per job
   let __adobeJobCompleted = false;
 
@@ -896,31 +942,104 @@
     autoResize(el.srcPath);
   }
 
-  function flattenPaths(paths = []) {
-    const out = [];
-    function walk(p) {
-      try {
-        const stat = electron.statSync?.(p);
-        if (stat && stat.isDirectory()) {
-          const entries =
-            electron.readdirWithTypes?.(p) ||
-            electron.readdir?.(p, { withFileTypes: true }) || [];
-          for (const entry of entries) {
-            if (entry.name.startsWith('.')) continue;
-            const next = electron.joinPath
-              ? electron.joinPath(p, entry.name)
-              : `${p}/${entry.name}`;
-            walk(next);
-          }
-        } else {
-          out.push(p);
-        }
-      } catch {
-        out.push(p);
+  function getEffectiveSources() {
+    if (Array.isArray(state.expandedSources) && state.expandedSources.length) {
+      return state.expandedSources;
+    }
+    if (Array.isArray(state.sources)) return state.sources;
+    return [];
+  }
+
+  let sourceScanToken = 0;
+
+  function setSourceScanState(isScanning) {
+    if (el.startBtn) {
+      if (!el.startBtn.dataset.defaultLabel) {
+        el.startBtn.dataset.defaultLabel =
+          el.startBtn.textContent || el.startBtn.value || 'Automate';
+      }
+      el.startBtn.textContent = isScanning
+        ? 'Scanning sources…'
+        : el.startBtn.dataset.defaultLabel;
+      if (isScanning) {
+        el.startBtn.disabled = true;
+        el.startBtn.dataset.scanning = 'true';
+      } else if (!state.currentJobId) {
+        el.startBtn.disabled = false;
+        delete el.startBtn.dataset.scanning;
       }
     }
-    paths.forEach(walk);
-    return out;
+
+    if (el.srcBtn) {
+      if (isScanning) {
+        el.srcBtn.dataset.loading = 'true';
+        el.srcBtn.setAttribute('aria-busy', 'true');
+      } else {
+        delete el.srcBtn.dataset.loading;
+        el.srcBtn.removeAttribute('aria-busy');
+      }
+    }
+  }
+
+  async function expandSourcePaths(paths = [], { showLoading = false } = {}) {
+    const token = ++sourceScanToken;
+
+    if (!Array.isArray(paths) || !paths.length) {
+      state.expandedSources = [];
+      unassignedFiles = [];
+      updateSourcePathDisplay([]);
+      renderSourceFileList();
+      triggerPreviewUpdate();
+      resetFileInfoGrid('adobe', 'adobe-file-grid');
+      return { files: [] };
+    }
+
+    if (showLoading) setSourceScanState(true);
+
+    try {
+      const response = await ipc?.expandPaths?.(paths, {
+        maxDepth: 10,
+        maxFiles: 15000,
+        timeoutMs: 20000
+      });
+
+      if (token !== sourceScanToken) {
+        return { files: state.expandedSources || [] };
+      }
+
+      if (!response || response.success === false) {
+        throw new Error(response?.error || 'Unable to expand sources.');
+      }
+
+      const files = Array.isArray(response.files) ? response.files : [];
+      state.expandedSources = files;
+      unassignedFiles = files.filter(f => !fileToBinMap[f]);
+
+      if (response.timedOut) {
+        setUILog('⚠️ Source scan timed out. Please narrow your selection.', { isError: true });
+      } else if (response.truncated) {
+        setUILog('⚠️ Source scan hit the file limit; job may be truncated.', { isError: true });
+      }
+
+      const effectiveFiles = getEffectiveSources();
+      updateSourcePathDisplay(effectiveFiles);
+      renderSourceFileList();
+      updateJobPreview();
+      await renderAdobeGrid(effectiveFiles);
+
+      return {
+        files,
+        truncated: !!response.truncated,
+        timedOut: !!response.timedOut
+      };
+    } catch (err) {
+      if (token !== sourceScanToken) return { files: state.expandedSources || [] };
+      setUILog(`❌ Failed to scan sources: ${err.message}`, { isError: true });
+      if (showLoading) alert(`❌ ${err.message}`);
+      return null;
+    } finally {
+      if (showLoading) setSourceScanState(false);
+    }
   }
 
   const presetDir = electron.resolvePath('config', 'presets', 'adobe-utilities');
@@ -1136,20 +1255,85 @@ Proxy Attachment Rules:
     setReconnectButtonState({ backend: !!isConnected, premiere: false });
   }
 
+  function clearSocketInterval(socket) {
+    if (socket?.__leadAE_pingInterval) {
+      clearInterval(socket.__leadAE_pingInterval);
+      socket.__leadAE_pingInterval = null;
+    }
+  }
+
+  function shutdownExistingSocket() {
+    const closingState = window.WebSocket?.CLOSING ?? 2;
+    const closedState = window.WebSocket?.CLOSED ?? 3;
+    const existing = window.__leadAE_socket;
+
+    if (!existing) return false;
+    if (existing.readyState === closingState || existing.readyState === closedState) {
+      return false;
+    }
+
+    debugLog('🔌 Closing existing Assist WebSocket before reconnect…');
+    existing.onopen = null;
+    existing.onclose = null;
+    existing.onerror = null;
+    existing.onmessage = null;
+    clearSocketInterval(existing);
+
+    try {
+      existing.close();
+    } catch (err) {
+      debugLog(`❌ Error closing existing Assist WebSocket: ${err?.message || err}`);
+    }
+
+    setReconnectButtonState({ backend: false, premiere: false });
+    window.__leadAE_socket = null;
+    return true;
+  }
+
   async function connectToLeadAE(_force = false) {
-    await initBridgeCredentials();
+    const { ok, reason } = (await initBridgeCredentials()) || {};
+
+    if (!ok || !TOKEN) {
+      const detail = reason || 'no_token';
+      const message =
+        detail === 'missing_token'
+          ? 'Skipping CEP bridge connect: token unavailable.'
+          : `Skipping CEP bridge connect: ${detail}.`;
+      debugLog(`⏭️ ${message}`);
+      setUILog(`❌ ${message}`, { isError: true });
+      setReconnectButtonState(false);
+      return;
+    }
     try {
 
-      await fetch(`${BASE_URL}/heartbeat`, {
-        headers: { Authorization: `Bearer ${TOKEN}` }
-      });
+      shutdownExistingSocket();
 
-      await fetch(`${BASE_URL}/handshake`, {
+      const heartbeatRes = await fetch(`${BASE_URL}/heartbeat`, {
         headers: { Authorization: `Bearer ${TOKEN}` }
       });
+      if (!heartbeatRes.ok) {
+        const message =
+          `❌ Assist bridge heartbeat failed: ${heartbeatRes.status} ${heartbeatRes.statusText || ''}`.trim();
+        debugLog(message);
+        setUILog(message, { isError: true });
+        setReconnectButtonState(false);
+        return;
+      }
+
+      const handshakeRes = await fetch(`${BASE_URL}/handshake`, {
+        headers: { Authorization: `Bearer ${TOKEN}` }
+      });
+      if (!handshakeRes.ok) {
+        const message =
+          `❌ Assist bridge handshake failed: ${handshakeRes.status} ${handshakeRes.statusText || ''}`.trim();
+        debugLog(message);
+        setUILog(message, { isError: true });
+        setReconnectButtonState(false);
+        return;
+      }
 
       const socket = new WebSocket(BASE_URL.replace('http', 'ws'), ['Bearer', TOKEN]);
-      const pingInterval = setInterval(
+      socket.__leadAE_pingInterval = setInterval(
         () => socket.send(JSON.stringify({ type: 'ping' })),
         25000
       );
@@ -1174,7 +1358,7 @@ Proxy Attachment Rules:
         }
       };
       socket.onclose = e => {
-        clearInterval(pingInterval);
+        clearSocketInterval(socket);
         if (window.__leadAE_socket === socket) {
           const state = { backend: false, premiere: false };
           setReconnectButtonState(state);
@@ -1247,7 +1431,7 @@ Proxy Attachment Rules:
   let folderOrder = Array.isArray(state.binFolders) ? [...state.binFolders] : [];
   let draggedChildren = [];
   const fileToBinMap = {};
-  let unassignedFiles = [];
+  let unassignedFiles = getEffectiveSources().slice();
   let lastSelectedIndex;
 
   const folderGroup = el.folderName?.closest('.field-group');
@@ -1508,13 +1692,21 @@ Proxy Attachment Rules:
   function gatherConfig() {
     const selectedMethod = (el.checksumMethod?.value || 'none').toLowerCase();
     const webhookUrl = typeof el.n8nUrl?.value === 'string' ? el.n8nUrl.value.trim() : '';
+    const proxyPreset = normalizeProxyPresetValue(el.proxyPreset?.value || '');
+
+    const threadSettings = syncThreadState();
+    const baseSources = Array.isArray(state.sources) ? [...state.sources] : [];
+    const expandedSources = getEffectiveSources();
+
     const config = {
-      sources: state.sources || [],
+      sourcePaths: baseSources,
+      expandedSources: Array.isArray(expandedSources) ? [...expandedSources] : [],
+      sources: Array.isArray(expandedSources) ? [...expandedSources] : [],
       destination: state.destination || '',
       importPremiere: !!el.importPremiere?.checked,
       createBins: !!el.createBins?.checked,
       generateProxies: !!el.generateProxies?.checked,
-      proxyPreset: normalizeProxyPresetValue(el.proxyPreset?.value || ''),
+      proxyPreset,
       proxyDest: state.proxyDest || '',
       binFolders: folderOrder.slice(),
       saveLog: !!el.saveLog?.checked,
@@ -1524,18 +1716,17 @@ Proxy Attachment Rules:
       n8nLog: !!el.n8nLog?.checked,
       verification: {
         method: selectedMethod
-      }
+      },
+      enableThreads: threadSettings.enableThreads,
+      autoThreads: threadSettings.autoThreads,
+      maxThreads: threadSettings.maxThreads,
+      retryFailures: !!el.retryFailures?.checked
     };
+
     // Map UI flag → backend flag: true (disable) ⇒ ffmpegFallback:false
     if (state.disableFfmpegFallback) {
       config.ffmpegFallback = false;
     }
-
-    const threadSettings = syncThreadState();
-    config.enableThreads = threadSettings.enableThreads;
-    config.autoThreads = threadSettings.autoThreads;
-    config.maxThreads = threadSettings.maxThreads;
-    config.retryFailures = !!el.retryFailures?.checked;
 
     if (el.notes) {
       state.notes = el.notes.value;
@@ -1546,8 +1737,8 @@ Proxy Attachment Rules:
     if (config.createBins) {
       config.bins = getBinPaths();
       config.fileToBinMap = { ...fileToBinMap };
+      state.binFolders = config.binFolders.slice();
     }
-    config.sources = flattenPaths(config.sources);
 
     const verificationLabelMap = {
       none: 'None',
@@ -1725,9 +1916,10 @@ Proxy Attachment Rules:
     }
   }
 
-  function applyPreset(data) {
-    const files = flattenPaths(data.sources || []);
-    state.sources = files;
+  async function applyPreset(data) {
+    state.sources = Array.isArray(data.sources) ? data.sources : [];
+    const expansion = await expandSourcePaths(state.sources, { showLoading: true });
+    const files = expansion?.files || getEffectiveSources();
     state.destination = data.destination || '';
     state.proxyDest = data.proxyDest || '';
     if (el.destPath) el.destPath.value = state.destination;
@@ -1788,14 +1980,12 @@ Proxy Attachment Rules:
     unassignedFiles = files.filter(f => !fileToBinMap[f]);
 
     renderFolderList();
-    updateSourcePathDisplay(state.sources);
+    updateSourcePathDisplay(files);
     triggerPreviewUpdate();
     renderSourceFileList();
     toggleBinControls();
     updateJobPreview();
-    if (files.length) {
-      renderAdobeGrid(files);
-    } else {
+    if (!files.length) {
       resetFileInfoGrid('adobe', 'adobe-file-grid');
     }
     // Make sure the toggle exists if proxies are visible
@@ -1830,7 +2020,7 @@ Proxy Attachment Rules:
     window.translatePage?.();
 
     if (!hidden.dataset.listenerBound) {
-      hidden.addEventListener('change', () => {
+      hidden.addEventListener('change', async () => {
         const file = hidden.value;
         if (!file) return;
         try {
@@ -1838,7 +2028,7 @@ Proxy Attachment Rules:
             electron.joinPath(presetDir, file)
           );
           const data = JSON.parse(raw);
-          applyPreset(data);
+          await applyPreset(data);
         } catch (err) {
           console.error('Failed to load preset', err);
         }
@@ -1868,7 +2058,7 @@ Proxy Attachment Rules:
     if (!file) return;
     try {
       const data = JSON.parse(ipc.readTextFile(file));
-      applyPreset(data);
+      await applyPreset(data);
     } catch (err) {
       setUILog('❌ Failed to load config: ' + err.message);
     }
@@ -1876,9 +2066,10 @@ Proxy Attachment Rules:
 
   renderFolderList();
   renderSourceFileList();
-  updateSourcePathDisplay(state.sources || []);
-  if (Array.isArray(state.sources) && state.sources.length) {
-    renderAdobeGrid(state.sources);
+  updateSourcePathDisplay(getEffectiveSources());
+  const initialFiles = getEffectiveSources();
+  if (Array.isArray(initialFiles) && initialFiles.length) {
+    renderAdobeGrid(initialFiles);
   } else {
     resetFileInfoGrid('adobe', 'adobe-file-grid');
   }
@@ -1931,6 +2122,9 @@ Proxy Attachment Rules:
   function resetAdobeFields(opts = {}) {
     const { preserveJobPreview = false } = opts;
     for (const key in state) delete state[key];
+    state.sources = [];
+    state.expandedSources = [];
+    state.disableFfmpegFallback = false;
     folderOrder = [];
     draggedChildren = [];
     for (const key in fileToBinMap) delete fileToBinMap[key];
@@ -2008,12 +2202,8 @@ Proxy Attachment Rules:
     const paths = await window.electron.selectFiles?.();
     if (!Array.isArray(paths) || !paths.length) return; // ✅ Prevents beep on cancel
     state.sources = paths;
-    unassignedFiles = [...paths];
     for (const key in fileToBinMap) delete fileToBinMap[key];
-    updateSourcePathDisplay(paths);
-    renderSourceFileList();
-    updateJobPreview();
-    await renderAdobeGrid(paths);
+    await expandSourcePaths(paths, { showLoading: true });
   });
 
   el.destBtn?.addEventListener('click', async () => {
@@ -2086,12 +2276,117 @@ Proxy Attachment Rules:
     return cfg;
   }
 
-  el.startBtn?.addEventListener('click', () => {
-    // DEMO: Automate button is visual-only (hover/press). No job is queued.
+  el.startBtn?.addEventListener('click', async () => {
+    // Ensure we have a fresh expansion before queuing the job
+    const expansion = await expandSourcePaths(state.sources, { showLoading: true });
+    if (!expansion) return;
+
+    if (expansion.timedOut) {
+      alert('⚠️ Source scan timed out. Please narrow your selection and try again.');
+      return;
+    }
+
+    if (expansion.truncated) {
+      const proceed = confirm(
+        'Source scanning hit the file limit. Proceed with the truncated file list?'
+      );
+      if (!proceed) return;
+    }
+
+    const raw = gatherConfig();
+    const config = await normalizeJobConfig(raw);
+
+    if (!Array.isArray(config.sources) || config.sources.length === 0) {
+      const message = 'No Source Files Selected';
+      setUILog(message, { isError: true });
+      alert(`❌ ${message}`);
+      return;
+    }
+
+    const failValidation = message => {
+      setUILog(`❌ ${message}`, { isError: true });
+      alert(`❌ ${message}`);
+    };
+
+    if (!config.destination) {
+      failValidation('Destination path is required.');
+      return;
+    }
+
+    if (!(await pathExists(config.destination))) {
+      failValidation(`Destination folder not found: ${config.destination}`);
+      return;
+    }
+
+    if (config.generateProxies) {
+      if (!config.proxyDest) {
+        failValidation('Proxy destination is required when generating proxies.');
+        return;
+      }
+
+      if (!(await pathExists(config.proxyDest))) {
+        failValidation(`Proxy destination folder not found: ${config.proxyDest}`);
+        return;
+      }
+    }
+
+    // 🧩 Simplified logic — let backend handle import + proxy sequencing.
+    // Never send premiereImportOnly from the renderer.
+    if (config.premiereImportOnly) {
+      delete config.premiereImportOnly;
+    }
+    debugLog('⚙️ premiereImportOnly removed — backend controls import sequence.');
+
+    try {
+      const jobId = await ipc?.invoke?.('queue-add-adobe', { config });
+      if (!jobId) {
+        const message = 'Failed to queue Adobe Automate job.';
+        setUILog(`❌ ${message}`, { isError: true });
+        alert(`❌ ${message}`);
+        return;
+      }
+      __adobeJobCompleted = false; // starting a new job
+      isCancelling = false;
+      currentJobId = jobId;
+      clearFinalized(currentJobKeyFrom({ id: jobId }));
+      currentJobStage = 'copy';
+      state.currentJobId = currentJobId;
+      state.currentJobStage = currentJobStage;
+      setAdobeAutomateControlsDisabled(true);
+      if (el.cancelBtn) el.cancelBtn.disabled = false;
+      setUILog(`🚀 Adobe Automate job started (ID: ${jobId})`);
+
+      // ✅ Keep everything visible during the job — don’t reset until the end
+      if (el.jobPreviewBox) {
+        delete el.jobPreviewBox.dataset.joblogVisible;
+      }
+    } catch (err) {
+      alert(`❌ ${err.message}`);
+    }
   });
 
-  el.cancelBtn?.addEventListener('click', () => {
-    // DEMO: Cancel button is visual-only (hover/press). No cancel logic.
+  el.cancelBtn?.addEventListener('click', async () => {
+    // No active job or already cancelling.
+    if (!currentJobId || isCancelling) return;
+    const confirmed = confirm('Cancel the current Adobe Automate job?');
+    if (!confirmed) return;
+
+    try {
+      isCancelling = true;
+      if (el.cancelBtn) el.cancelBtn.disabled = true;
+      setUILog('🛑 Cancel requested… waiting for confirmation from backend.');
+
+      const res = await ipc?.invoke?.('queue-cancel-job', currentJobId);
+      const logMessage =
+        typeof res === 'string' && res.trim() ? res : 'Cancel requested.';
+
+      // Keep the panel locked and progress visible; final reset happens on queue-job-cancelled/complete.
+      setUILog(`🛑 ${logMessage}`);
+    } catch (err) {
+      isCancelling = false;
+      if (el.cancelBtn) el.cancelBtn.disabled = false;
+      setUILog(`❌ Cancel failed: ${err.message}`);
+    }
   });
 
   ipc?.on('premiere-import-media', (_e, paths) => {
@@ -2334,7 +2629,7 @@ Proxy Attachment Rules:
     }
   });
 
-   // when complete
+  // when complete
 ipc?.on('queue-job-complete', (_e, job) => {
   if ((job?.panel || '').toLowerCase() !== 'adobe-utilities') return;
 
@@ -2344,6 +2639,7 @@ ipc?.on('queue-job-complete', (_e, job) => {
   resetAdobeAutomatePanelUI();
   resetAdobeFields();
 
+  isCancelling = false;
   currentJobId = null;
   currentJobStage = null;
   state.currentJobId = null;
@@ -2388,6 +2684,7 @@ ipc?.on('queue-job-complete', (_e, job) => {
 
   ipc?.on('queue-job-cancelled', (_e, job) => {
     if (job.panel !== 'adobe-utilities') return;
+    isCancelling = false;
     currentJobId = null;
     currentJobStage = null;
     state.currentJobId = currentJobId;
@@ -2484,6 +2781,27 @@ ipc?.on('queue-job-complete', (_e, job) => {
         hidden.dataset.proxyChangeBound = 'true';
       }
 
+      const tooltip = document.getElementById('proxy-settings-tooltip');
+      if (tooltip) {
+        tooltip.innerHTML = `
+    <div class="tooltip-content">
+      <div class="tooltip-header">Proxy Preset Details</div>
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">Preset Folder</span>
+        <div class="tooltip-path">${proxyPresetDir}</div>
+      </div>
+      <div class="tooltip-section">
+        <span class="tooltip-subtitle">Attachment Rules</span>
+        <ul class="tooltip-list">
+          <li>Container must match (<strong>mov/mp4</strong>)</li>
+          <li>Resolution / frame size must match source</li>
+          <li>Frame rate must match source</li>
+          <li>Audio must be <strong>discrete-layout parity</strong> with source (per stream): Stereo↔Stereo, Dual-Mono↔Dual-Mono, NxMono↔NxMono</li>
+        </ul>
+      </div>
+    </div>
+  `;
+      }
     } catch (err) {
       console.error('❌ Could not load Adobe Media Encoder presets:', err);
     }

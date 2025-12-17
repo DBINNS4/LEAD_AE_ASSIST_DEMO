@@ -1,34 +1,75 @@
 // ✅ Shared scope for testing
 let el = {};
 let logs = [];
+const LOG_RENDER_LIMIT = Number.parseInt(window.LOG_VIEWER_RENDER_LIMIT ?? 500, 10) || 500;
+// Keep an in-memory retention cap to avoid unbounded log growth, independent of render cap.
+const DEFAULT_RETENTION_LIMIT = 5000;
+const rawRetention = window.LOG_VIEWER_RETENTION_LIMIT ?? DEFAULT_RETENTION_LIMIT;
+const parsedRetention = Number.parseInt(rawRetention, 10);
+const LOG_RETENTION_LIMIT = Number.isFinite(parsedRetention) && parsedRetention > 0
+  ? parsedRetention
+  : Infinity; // Allow unlimited retention via 0/negative/NaN.
 let expanded = false;
 let userInteracted = false;
+let logViewerInitialized = false;
+let renderTimeout = null;
+let wrapLinesPreferred = false;
+let syncExpandUi = () => {};
+let isLoadingLogs = false;
+let hasLoadedLogs = false;
+let loadLogsPromise = null;
 
 function initLogViewer() {
+  if (logViewerInitialized) return;
+  logViewerInitialized = true;
+
   console.log("✅ renderer.log-viewer.js loaded");
+
+  const ipcBridge = typeof ipc === 'undefined' ? window.ipc ?? window.electron : ipc;
+
+  const translate = (key, fallback) => {
+    const t = window.i18n?.t;
+    if (typeof t === "function") {
+      const translated = t(key);
+      if (translated) return translated;
+    }
+    return fallback;
+  };
+
+  const withLimit = (text) => (typeof text === 'string'
+    ? text.replace(/{{limit}}/g, LOG_RENDER_LIMIT)
+    : text);
 
   // ─── Log Viewer: panel overview tooltip ───────────────────────────────────
   const overviewTooltip = document.getElementById('log-viewer-overview-tooltip');
   if (overviewTooltip && !overviewTooltip.dataset.bound) {
     overviewTooltip.innerHTML = `
       <div class="tooltip-content">
-        <div class="tooltip-header">LOG VIEWER OVERVIEW</div>
+        <div class="tooltip-header">LOG VIEWER — Technical Overview</div>
 
         <div class="tooltip-section">
-          <span class="tooltip-subtitle">What this panel is for</span>
+          <span class="tooltip-subtitle">Core capabilities</span>
           <ul class="tooltip-list">
-            <li>Inspect the history of ingest, transcode, automation, and utility jobs.</li>
-            <li>Filter logs by date range, tool, and severity level.</li>
-            <li>Export logs for support, documentation, or archival.</li>
+            <li>Aggregates ingest, transcode, automation, NLE utility, and system logs in one place.</li>
+            <li>Filters by date range, tool, severity, and free-text search.</li>
+            <li>Exports filtered views to TXT/JSON/CSV for support, QC, or documentation.</li>
           </ul>
         </div>
 
         <div class="tooltip-section">
-          <span class="tooltip-subtitle">Quick workflow</span>
+          <span class="tooltip-subtitle">Inputs / outputs</span>
           <ul class="tooltip-list">
-            <li><strong>Filter</strong> – set date range, tool, and optionally “errors only”.</li>
-            <li><strong>Search</strong> – type keywords to match filenames, jobs, or messages.</li>
-            <li><strong>Export</strong> – use the export controls to save TXT/JSON/CSV for hand‑off.</li>
+            <li>Inputs: rolling log files emitted by the Assist backend and panels.</li>
+            <li>Outputs: on-screen filtered view plus optional export files on disk.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Under the hood</span>
+          <ul class="tooltip-list">
+            <li>Reads log files from the app’s log directory and keeps an in-memory retention window.</li>
+            <li>Normalizes messages by panel / type so filters behave consistently across tools.</li>
+            <li>Export uses the same filtered set that is rendered, not the entire archive.</li>
           </ul>
         </div>
       </div>
@@ -55,43 +96,77 @@ function initLogViewer() {
   };
 
   const dateOpts = [
-    { value: 'today', label: 'Today' },
-    { value: '7days', label: 'Last 7 Days' },
-    { value: 'custom', label: 'Custom Range' }
+    { value: 'today', label: translate('logViewerDateToday', 'Today') },
+    { value: '7days', label: translate('logViewerDateLast7Days', 'Last 7 Days') },
+    { value: 'custom', label: translate('logViewerDateCustomRange', 'Custom Range') }
   ];
   setupStyledDropdown('view-by-date', dateOpts);
   setDropdownValue('view-by-date', el.dateFilter?.value || 'today');
 
   const toolOpts = [
-    { value: 'all', label: 'All' },
-    { value: 'ingest', label: 'Ingest' },
-    { value: 'transcode', label: 'Transcode' },
-    { value: 'clone', label: 'Clone' },
-    { value: 'organizer', label: 'Organizer' },
-    { value: 'transcribe', label: 'Transcribe' },
-    { value: 'adobe-utilities', label: 'Adobe Utilities' },
-    { value: 'nle-utilities', label: 'NLE Utilities' }
+    { value: 'all', label: translate('logViewerToolAll', 'All') },
+    { value: 'ingest', label: translate('logViewerToolIngest', 'Ingest') },
+    { value: 'transcode', label: translate('logViewerToolTranscode', 'Transcode') },
+    { value: 'clone', label: translate('logViewerToolClone', 'Clone') },
+    { value: 'organizer', label: translate('logViewerToolOrganizer', 'Organizer') },
+    { value: 'transcribe', label: translate('logViewerToolTranscribe', 'Transcribe') },
+    { value: 'adobe-utilities', label: translate('logViewerToolAdobeUtilities', 'Adobe Utilities') },
+    { value: 'nle-utilities', label: translate('logViewerToolNleUtilities', 'NLE Utilities') },
+    { value: 'comparison', label: translate('logViewerToolComparison', 'Comparison') },
+    { value: 'resolution', label: translate('logViewerToolResolution', 'Resolution') },
+    { value: 'system', label: translate('logViewerToolSystem', 'System') }
   ];
   setupStyledDropdown('view-by-tool', toolOpts);
   setDropdownValue('view-by-tool', el.toolFilter?.value || 'all');
 
   const exportOpts = [
-    { value: 'txt', label: 'TXT' },
-    { value: 'json', label: 'JSON' },
-    { value: 'csv', label: 'CSV' }
+    { value: 'txt', label: translate('logViewerExportTxt', 'TXT') },
+    { value: 'json', label: translate('logViewerExportJson', 'JSON') },
+    { value: 'csv', label: translate('logViewerExportCsv', 'CSV') }
   ];
   setupStyledDropdown('export-format', exportOpts);
   setDropdownValue('export-format', el.exportFormat?.value || 'txt');
 
 
-  function loadLogsFromDisk() {
+  async function loadLogsFromDisk() {
+    if (isLoadingLogs && loadLogsPromise) return loadLogsPromise;
+
+    isLoadingLogs = true;
+    renderLogs();
+
     try {
       const logDir = window.electron.resolvePath('logs');
-      const past = window.electron.readLogFiles(logDir);
-      if (Array.isArray(past)) logs = past;
+      const loader = ipcBridge?.invoke
+        ? ipcBridge.invoke('log-viewer:read-log-files', logDir)
+        : Promise.resolve(window.electron.readLogFiles(logDir));
+
+      loadLogsPromise = loader;
+      const past = await loader;
+      logs = Array.isArray(past) ? past : [];
+      enforceRetentionLimit();
+      hasLoadedLogs = true;
     } catch (err) {
       console.error("❌ Failed to load archived logs:", err);
+    } finally {
+      isLoadingLogs = false;
+      loadLogsPromise = null;
+      renderLogs();
     }
+
+    return logs;
+  }
+
+  function enforceRetentionLimit() {
+    if (!Number.isFinite(LOG_RETENTION_LIMIT)) return;
+    const excess = logs.length - LOG_RETENTION_LIMIT;
+    if (excess > 0) {
+      sortLogsByTimestamp();
+      logs.splice(LOG_RETENTION_LIMIT);
+    }
+  }
+
+  function sortLogsByTimestamp() {
+    logs.sort((a, b) => (b?.timestamp ?? 0) - (a?.timestamp ?? 0));
   }
 
   function showToast(msg) {
@@ -100,6 +175,8 @@ function initLogViewer() {
     el.toast.classList.add("show");
     setTimeout(() => el.toast.classList.remove("show"), 2000);
   }
+
+  const debugUiEnabled = Boolean(window.DEBUG_UI || window.electron?.DEBUG_UI);
 
   function showInitMessage() {
     if (!el.logView) return;
@@ -110,23 +187,18 @@ function initLogViewer() {
     el.logView.appendChild(initP);
   }
 
-  showInitMessage();
-
-  if (typeof ipc === 'undefined') {
-    var ipc = window.ipc ?? window.electron;
+  if (debugUiEnabled) {
+    showInitMessage();
   }
 
+  loadLogsFromDisk();
 
-  function renderLogs() {
-    console.log("🔁 renderLogs called");
 
-    const container = el.logView || document.getElementById('live-log-view');
-    if (!container) return;
-
+  function getFilteredLogs() {
     const tool = el.toolFilter.value;
     const showErrorsOnly = el.errorOnly.checked;
     const searchText = el.searchInput.value.toLowerCase();
-    const includeSystem = el.systemLogs.checked;
+    const includeSystem = el.systemLogs.checked || tool === 'system';
     const dateRange = el.dateFilter.value;
     const now = Date.now();
     const startDateVal = el.startDate?.value;
@@ -138,10 +210,11 @@ function initLogViewer() {
     const startDate = startDateVal ? parseDate(startDateVal, false) : null;
     const endDate = endDateVal ? parseDate(endDateVal, true) : null;
 
+    sortLogsByTimestamp();
     let filtered = logs.filter(log => {
+      if (!includeSystem && log.type === 'system' && tool !== 'system') return false;
       if (tool !== "all" && log.type !== tool) return false;
       if (showErrorsOnly && log.status !== "error" && log.status !== "warning") return false;
-      if (!includeSystem && log.type === "system") return false;
 
       if (dateRange === 'today') {
         const logDate = new Date(log.timestamp);
@@ -155,51 +228,121 @@ function initLogViewer() {
 
       return true;
     });
-    
+
     if (searchText) {
-      const searchFiltered = filtered.filter(log => {
-        return JSON.stringify(log).toLowerCase().includes(searchText);
-      });
-      if (searchFiltered.length > 0) {
-        filtered = searchFiltered;
-      }
+      filtered = filtered.filter(log =>
+        JSON.stringify(log).toLowerCase().includes(searchText)
+      );
     }
 
+    sortLogsByTimestamp();
+    return filtered;
+  }
+
+  function renderLogs() {
+    console.log("🔁 renderLogs called");
+
+    const container = el.logView || document.getElementById('live-log-view');
+    if (!container) return;
+
+    if (isLoadingLogs) {
+      container.textContent = translate('logViewerLoading', '⏳ Loading logs…');
+      return;
+    }
+
+    if (!hasLoadedLogs && logs.length === 0) {
+      container.textContent = translate('logViewerEmpty', '📭 No logs yet.');
+      return;
+    }
+
+    const filtered = getFilteredLogs();
+    const renderLimited = LOG_RENDER_LIMIT > 0 ? filtered.slice(0, LOG_RENDER_LIMIT) : filtered;
+
     container.textContent = '';
-    if (filtered.length) {
+    if (renderLimited.length) {
       const frag = document.createDocumentFragment();
-      filtered.forEach(log => {
+      renderLimited.forEach(log => {
         frag.appendChild(createLogLineElement(log));
       });
       container.appendChild(frag);
+      if (filtered.length > renderLimited.length) {
+        const notice = document.createElement('div');
+        notice.className = 'log-entry log-info';
+        const limitText = translate(
+          'logViewerRenderLimited',
+          `Showing first ${LOG_RENDER_LIMIT} results on screen. Export uses your full filtered set.`
+        );
+        notice.textContent = withLimit(limitText);
+        container.appendChild(notice);
+      }
     } else {
-      container.textContent = '📭 No logs found.';
+      container.textContent = translate('logViewerNoResults', '📭 No logs found.');
     }
   }
 
   function formatLogLine(log) {
-    const date = new Date(log.timestamp).toLocaleString();
-    const typeStr = log.type ? log.type.toUpperCase() : 'UNKNOWN';
-    const summary = `[${date}] [${typeStr}] ${log.message ?? ''}`;
-    if (expanded && log.detail) {
-      return `${summary}<br>→ ${log.detail}`;
+    const date = log.timestamp ? new Date(log.timestamp).toLocaleString() : '';
+
+    if (log.status && log.file) {
+      const typeStr = log.type ? log.type.toUpperCase() : 'UNKNOWN';
+      const summary = `[${date}] [${typeStr}] ${log.message ?? ''}`;
+      if (expanded && log.detail) {
+        return `${summary}<br>→ ${log.detail}`;
+      }
+      return summary;
+    }
+
+    const level = (log.level || 'info').toUpperCase();
+    const parts = [date, log.panel || log.type || '', log.jobId || '', log.stage || '', level]
+      .filter(Boolean)
+      .map(p => `[${p}]`);
+    const summary = `${parts.join(' ')} ${log.message ?? ''}`;
+    if (expanded && (log.detail || log.meta)) {
+      const metaStr = log.detail || JSON.stringify(log.meta || {});
+      return `${summary}<br>→ ${metaStr}`;
     }
     return summary;
   }
 
   function createLogLineElement(log) {
     const lineEl = document.createElement('div');
-    const date = new Date(log.timestamp).toLocaleString();
-    const typeStr = log.type ? log.type.toUpperCase() : 'UNKNOWN';
-    const summary = `[${date}] [${typeStr}] ${log.message ?? ''}`;
-    lineEl.textContent = summary;
-    if (expanded && log.detail) {
+
+    if (log.status && log.file) {
+      const date = log.timestamp ? new Date(log.timestamp).toLocaleString() : '';
+      const typeStr = log.type ? log.type.toUpperCase() : 'UNKNOWN';
+      lineEl.className = `log-entry log-${log.status || 'info'}`;
+      lineEl.textContent = `[${date}] [${typeStr}] ${log.message ?? ''}`;
+      if (expanded && log.detail) {
+        lineEl.appendChild(document.createElement('br'));
+        const detailEl = document.createElement('span');
+        detailEl.textContent = '→ ' + log.detail;
+        lineEl.appendChild(detailEl);
+      }
+      return lineEl;
+    }
+
+    const level = (log.level || 'info').toLowerCase();
+    const date = log.timestamp ? new Date(log.timestamp).toLocaleString() : '';
+    const parts = [date, log.panel || log.type || '', log.jobId || '', log.stage || '', level.toUpperCase()]
+      .filter(Boolean)
+      .map(p => `[${p}]`);
+    lineEl.className = `log-entry log-${level}`;
+    lineEl.textContent = `${parts.join(' ')} ${log.message ?? ''}`;
+    if (expanded && (log.detail || log.meta)) {
       lineEl.appendChild(document.createElement('br'));
       const detailEl = document.createElement('span');
-      detailEl.textContent = '→ ' + log.detail;
+      detailEl.textContent = '→ ' + (log.detail || JSON.stringify(log.meta || {}));
       lineEl.appendChild(detailEl);
     }
     return lineEl;
+  }
+
+  function scheduleRender() {
+    if (renderTimeout) clearTimeout(renderTimeout);
+    renderTimeout = setTimeout(() => {
+      renderTimeout = null;
+      renderLogs();
+    }, 100);
   }
 
   function writeLogToFile(lines, targetPath) {
@@ -215,38 +358,64 @@ function initLogViewer() {
   function exportLog() {
     const exportDir = el.exportPathInput.value;
     if (!exportDir) {
-      alert('Please select export folder');
+      alert(translate('logViewerSelectExportFolder', 'Please select export folder'));
       return;
     }
 
     const format = el.exportFormat.value;
     let fileName = 'logs.' + format;
     let contentLines = [];
+    const filtered = getFilteredLogs();
 
     if (format === 'json') {
-      contentLines = [JSON.stringify(logs, null, 2)];
+      contentLines = [JSON.stringify(filtered, null, 2)];
     } else if (format === 'csv') {
-      const header = 'timestamp,type,message,detail,status,file';
-      const csvLines = logs.map(l => [
-        l.timestamp,
-        l.type,
-        l.message,
-        l.detail || '',
-        l.status || '',
-        l.file || ''
-      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','));
-      contentLines = [header, ...csvLines];
+      const csvHeader = [
+        'timestamp',
+        'panel',
+        'type',
+        'level',
+        'jobId',
+        'stage',
+        'message',
+        'detail',
+        'meta',
+        'status',
+        'file'
+      ];
+
+      const csvLines = filtered.map(l => {
+        const values = [
+          l.timestamp,
+          l.panel || l.type || '',
+          l.type || l.panel || '',
+          l.level || '',
+          l.jobId || '',
+          l.stage || '',
+          l.message,
+          l.detail || '',
+          typeof l.meta === 'string' ? l.meta : (l.meta ? JSON.stringify(l.meta) : ''),
+          l.status || '',
+          l.file || ''
+        ];
+
+        return values
+          .map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"')
+          .join(',');
+      });
+
+      contentLines = [csvHeader.join(','), ...csvLines];
     } else {
       // txt
-      contentLines = logs.map(l => formatLogLine(l).replace(/<br>/g, '\n'));
+      contentLines = filtered.map(l => formatLogLine(l).replace(/<br>/g, '\n'));
       fileName = 'logs.txt';
     }
 
     const fullPath = window.electron.joinPath(exportDir, fileName);
     if (writeLogToFile(contentLines, fullPath)) {
-      showToast('Log exported');
+      showToast(translate('logViewerExportSuccess', 'Log exported'));
     } else {
-      alert('Failed to export log');
+      alert(translate('logViewerExportFailure', 'Failed to export log'));
     }
   }
 
@@ -262,6 +431,7 @@ function resetLogViewer() {
   }
   if (el.startDate) el.startDate.value = '';
   if (el.endDate) el.endDate.value = '';
+  updateDateVisibility();
   if (el.toolFilter) {
     el.toolFilter.value = 'all';
     setDropdownValue('view-by-tool', 'all');
@@ -275,18 +445,16 @@ function resetLogViewer() {
   }
   if (el.exportPathInput) el.exportPathInput.value = '';
 
-  // Clear display
-  showInitMessage();
+  syncExpandUi();
+  loadLogsFromDisk();
+  renderLogs();
 }
 
-  // DEMO: Export Logs button is visual-only (hover/press).
-  el.exportBtn?.addEventListener('click', () => {
-    // no-op
-  });
+  el.exportBtn?.addEventListener('click', exportLog);
   el.resetBtn?.addEventListener('click', resetLogViewer);
 
   function initIpcLogs() {
-    if (!ipc?.on) return;
+    if (!ipcBridge?.on) return;
     const panels = [
       'ingest',
       'transcode',
@@ -295,40 +463,63 @@ function resetLogViewer() {
       'transcribe',
       'adobe-utilities',
       'nle-utilities',
+      'comparison',
+      'resolution',
+      'system'
     ];
     panels.forEach(type => {
-      ipc.on(`${type}-log-message`, (_e, data) => {
+      ipcBridge.on(`${type}-log-message`, (_e, data) => {
+        const level = data.level || (data.isWarning ? 'warn' : data.isError ? 'error' : 'info');
+        const status =
+          level === 'error' || data.isError
+            ? 'error'
+            : level === 'warn' || data.isWarning
+              ? 'warning'
+              : 'info';
         logs.push({
           timestamp: Date.now(),
           type,
           message: data.msg ?? data.message ?? '',
           detail: data.detail ?? '',
-          status: data.isError ? 'error' : 'info',
+          status,
+          level,
           file: data.fileId || ''
         });
-        if (userInteracted) renderLogs();
+        enforceRetentionLimit();
+        scheduleRender();
       });
     });
   }
 
-  el.selectExportBtn?.addEventListener("click", () => {
-    // DEMO: no-op
+  el.selectExportBtn?.addEventListener("click", async () => {
+    if (!ipcBridge?.selectFolder) {
+      showToast(translate('logViewerFolderPickerUnavailable', 'Folder selection unavailable in this environment'));
+      return;
+    }
+    const folder = await ipcBridge?.selectFolder?.();
+    if (folder) el.exportPathInput.value = folder;
   });
 
-  // Repurpose: Wrap/Unwrap long lines in-place (no I/O, no re-render needed)
   if (el.expandBtn && el.logView) {
-    // Optional: set a clearer label on boot
-    if (!el.expandBtn.textContent?.trim()) {
-      el.expandBtn.textContent = "Wrap Lines";
-    }
+    wrapLinesPreferred = el.logView.classList.contains("wrap-lines");
+    syncExpandUi = () => {
+      if (!el.expandBtn || !el.logView) return;
+      el.expandBtn.setAttribute("aria-pressed", String(expanded));
+      const labelKey = expanded ? "collapseTaskDetails" : "expandTaskDetails";
+      el.expandBtn.setAttribute("data-i18n", labelKey);
+      el.expandBtn.textContent = translate(
+        labelKey,
+        expanded ? "Collapse Task Details" : "Expand Task Details"
+      );
+      el.logView.classList.toggle("wrap-lines", expanded || wrapLinesPreferred);
+    };
+
+    syncExpandUi();
+
     el.expandBtn.addEventListener("click", () => {
-      const on = el.logView.classList.toggle("wrap-lines");
-      el.expandBtn.setAttribute("aria-pressed", String(on));
-      // Optional live label swap; keep your i18n key if you prefer
-      const btnText = on ? "Unwrap Lines" : "Wrap Lines";
-      if (!el.expandBtn.hasAttribute("data-i18n")) {
-        el.expandBtn.textContent = btnText;
-      }
+      expanded = !expanded;
+      syncExpandUi();
+      renderLogs();
     });
   }
 
@@ -371,8 +562,9 @@ function resetLogViewer() {
       renderLogs,
       formatLogLine,
       exportLog,
+      getFilteredLogs,
       resetLogViewer,
-      __setLogs: (mockLogs) => { logs = mockLogs; },
+      __setLogs: (mockLogs) => { logs = mockLogs; enforceRetentionLimit(); },
       __setExpanded: (val) => { expanded = val; },
       __setUserInteracted: (val) => { userInteracted = val; }
     };
@@ -383,5 +575,4 @@ if (document.readyState !== 'loading') {
   initLogViewer();
 } else {
   document.addEventListener('DOMContentLoaded', initLogViewer);
-  window.addEventListener?.('DOMContentLoaded', initLogViewer);
 }

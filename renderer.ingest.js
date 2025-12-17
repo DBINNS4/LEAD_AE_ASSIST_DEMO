@@ -3,13 +3,103 @@
 const watchUtils = window.watchUtils;
 const presetDir = window.electron.resolvePath('config', 'presets', 'ingest');
 
+const PANEL_ID = 'ingest';
+
+const translate = (key, fallback) => window.i18n?.t?.(key) ?? fallback ?? key;
+
+const getCloneTreePlaceholder = () => translate('cloneFolderTreePlaceholder', '📂 Folder tree will appear here...');
+
+function panelLog(level, message, meta) {
+  const formatted = `[${PANEL_ID}] [${level.toUpperCase()}] ${message}`;
+  // eslint-disable-next-line no-console
+  console[level === 'error' ? 'error' : 'log'](formatted, meta || {});
+}
+
+let currentJobId = null;
 const ingestPreviewEl = document.getElementById('ingest-job-preview-box');
+
+// Build the hamster DOM structure if missing (same structure used in Adobe Automate)
+function ensureHamsterStructure(root) {
+  if (!root) return;
+  if (root.querySelector('.wheel')) return;
+  root.innerHTML = `
+    <div class="wheel"></div>
+    <div class="hamster">
+      <div class="hamster__body">
+        <div class="hamster__head">
+          <div class="hamster__ear"></div>
+          <div class="hamster__eye"></div>
+          <div class="hamster__nose"></div>
+        </div>
+        <div class="hamster__limb hamster__limb--fr"></div>
+        <div class="hamster__limb hamster__limb--fl"></div>
+        <div class="hamster__limb hamster__limb--br"></div>
+        <div class="hamster__limb hamster__limb--bl"></div>
+        <div class="hamster__tail"></div>
+      </div>
+    </div>
+    <div class="spoke"></div>
+  `;
+}
+
+function showIngestHamster() {
+  const status = document.getElementById('ingest-job-status');
+  if (!status) return;
+  let wheel = status.querySelector('.wheel-and-hamster');
+  if (!wheel) {
+    wheel = document.createElement('div');
+    wheel.className = 'wheel-and-hamster';
+    status.appendChild(wheel);
+  }
+  ensureHamsterStructure(wheel);
+  status.style.display = 'block';
+  status.dataset.jobActive = 'true';
+}
+
+function hideIngestHamster() {
+  const status = document.getElementById('ingest-job-status');
+  if (!status) return;
+  delete status.dataset.jobActive;
+  status.style.display = 'none';
+  status.querySelector('.wheel-and-hamster')?.remove();
+}
+
+function ensureEtaInline() {
+  const host = document.getElementById('ingest-loader-inline');
+  if (!host) return null;
+  let eta = document.getElementById('ingest-eta-inline');
+  if (!eta) {
+    eta = document.createElement('span');
+    eta.id = 'ingest-eta-inline';
+    eta.className = 'eta-inline';
+    host.appendChild(eta);
+  }
+  return eta;
+}
 
 function resetIngestProgressUI() {
   const bar = document.getElementById('ingest-progress');
   const out = document.getElementById('ingest-progress-output');
   if (bar) { bar.value = 0; bar.style.display = 'none'; }
   if (out) out.value = '';
+  const eta = document.getElementById('ingest-eta-inline');
+  if (eta) eta.textContent = '';
+  hideIngestHamster();
+}
+
+async function calculateIngestBytes(cfg) {
+  const res = await (window.ipc ?? window.electron).invoke('calculate-ingest-bytes', cfg);
+
+  if (res?.success !== true) {
+    throw new Error(res?.error || 'calculate-ingest-bytes returned an unsuccessful response');
+  }
+
+  return {
+    total: res?.total ?? 0,
+    map: res?.map ?? {},
+    fileCount: res?.fileCount ?? 0,
+    folderCount: res?.folderCount ?? 0
+  };
 }
 
 function autoResizeTextArea(el) {
@@ -80,7 +170,23 @@ async function updateIngestJobPreview() {
   lines.push(`n8n webhook: ${cfg.enableN8N ? (cfg.n8nUrl || '(no URL)') : 'off'}`);
   if (cfg.notes?.trim()) lines.push(`Notes: ${cfg.notes.trim()}`);
 
-  // Demo mode: skip backend size calculations for ingest/clone previews.
+  try {
+    if (cfg.cloneMode && window.cloneUtils?.calculateCloneBytes) {
+      const res = await window.cloneUtils.calculateCloneBytes(cfg);
+      const files = res?.fileCount ?? res?.count ?? 0;
+      const folders = res?.folderCount ?? 0;
+      lines.push(`Items: ${files} files, ${folders} folders`);
+    } else if (typeof calculateIngestBytes === 'function') {
+      const { fileCount = 0, folderCount = 0 } = await calculateIngestBytes(cfg);
+      lines.push(`Items: ${fileCount} files, ${folderCount} folders`); // Removed size line for cleaner UI
+    }
+  } catch (err) {
+    const errMsg = `⚠️ Failed to estimate job size: ${err?.message || err}`;
+    logIngest(errMsg, { isError: true });
+    if (ingestElements.logOutput) {
+      ingestElements.logOutput.textContent = errMsg;
+    }
+  }
 
   ingestPreviewEl.value = lines.join('\n');
   autoResizeTextArea(ingestPreviewEl);
@@ -193,12 +299,77 @@ const ingestElements = {
   loadConfigBtn: document.getElementById('ingest-load-config'),
 };
 
+function showValidationError(msg) {
+  logIngest(msg, { isError: true });
+  if (ingestElements.logOutput) {
+    ingestElements.logOutput.textContent = msg;
+  }
+}
+
 function logIngest(msg, opts = {}) {
   window.logPanel?.log('ingest', msg, opts);
 }
 
+async function refreshCloneTreeFromSource(sourcePath) {
+  const enabled = ingestElements.enableClone?.checked;
+  const src = (sourcePath ?? ingestElements.sourcePath?.value ?? '').trim();
+  const container = document.getElementById('clone-folder-tree');
+  const selectAllEl = document.getElementById('clone-select-all-folders');
+
+  const clearCloneState = message => {
+    if (container) {
+      container.innerHTML = '';
+    }
+    if (selectAllEl) selectAllEl.checked = false;
+    window.cloneSelectedFolders = [];
+    window.cloneFoldersOnly = [];
+    window.cloneExcluded = [];
+    if (container && window.cloneUtils?.renderFolderTree) {
+      const rootLabel = translate('cloneTreeRootLabel', 'Source');
+      window.cloneUtils.renderFolderTree({ name: src || rootLabel, path: '', children: [] }, container);
+    }
+    if (container && message) {
+      container.textContent = message;
+    }
+    window.cloneUtils.updateCountsUI?.();
+  };
+
+  // Always reset selection state when the source changes
+  clearCloneState();
+
+  if (!enabled || !src) {
+    return;
+  }
+
+  try {
+    const result = await ipc.invoke('get-folder-tree', src);
+    if (result?.success) {
+      if (container) {
+        container.innerHTML = '';
+        window.cloneUtils.renderFolderTree(result.tree, container);
+        window.cloneUtils.updateCountsUI?.();
+      }
+    } else {
+      const errMsg = result?.error || 'Unable to fetch folder tree';
+      const msg = `❌ Failed to load folder tree: ${errMsg}`;
+      logIngest(msg);
+      panelLog('error', 'Failed to load folder tree', { error: errMsg });
+      clearCloneState('Failed to load folder tree');
+    }
+  } catch (err) {
+    const msg = `❌ Failed to load folder tree: ${err?.message || err}`;
+    logIngest(msg);
+    panelLog('error', 'Failed to load folder tree', { error: err?.message || err });
+    clearCloneState('Failed to load folder tree');
+  }
+}
+
 ingestElements.enableClone?.addEventListener('change', async () => {
   const enabled = ingestElements.enableClone.checked;
+  const modeMsg = enabled
+    ? '🧬 Clone mode enabled.'
+    : '📥 Ingest mode enabled.';
+  logIngest(modeMsg);
   document.getElementById('ingest').classList.toggle('clone-mode', enabled);
   if (ingestElements.watchModeToggle) {
     if (enabled) {
@@ -210,14 +381,7 @@ ingestElements.enableClone?.addEventListener('change', async () => {
     }
   }
   if (enabled && ingestElements.sourcePath.value) {
-    const src = ingestElements.sourcePath.value;
-    const result = await ipc.invoke('get-folder-tree', src);
-    if (result.success) {
-      const container = document.getElementById('clone-folder-tree');
-      container.innerHTML = '';
-      window.cloneUtils.renderFolderTree(result.tree, container);
-      window.cloneUtils.updateCountsUI?.();
-    }
+    refreshCloneTreeFromSource();
   }
   updateIngestJobPreview();
 });
@@ -275,7 +439,24 @@ if (showCount) {
       return;
     }
 
-    updateIngestJobPreview();
+    try {
+      const cfg = gatherIngestConfig();
+      if (!cfg || !cfg.cloneMode) {
+        updateIngestJobPreview();
+        return;
+      }
+      if (!window.cloneUtils?.calculateCloneBytes) {
+        updateIngestJobPreview();
+        return;
+      }
+      await window.cloneUtils.calculateCloneBytes(cfg);
+      updateIngestJobPreview();
+    } catch (err) {
+      const msg = `❌ Failed to calculate clone bytes: ${err?.message || err}`;
+      logIngest(msg, { isError: true });
+      panelLog('error', 'Failed to calculate clone bytes', { error: err?.message || err });
+      updateIngestJobPreview();
+    }
   });
 }
 
@@ -378,17 +559,21 @@ function resetIngestFields() {
   const cloneShowCount = document.getElementById('clone-show-file-count');
   if (cloneShowCount) cloneShowCount.checked = false;
   const cloneTreeEl = document.getElementById('clone-folder-tree');
-  if (cloneTreeEl) cloneTreeEl.textContent = '📂 Folder tree will appear here...';
+  if (cloneTreeEl) cloneTreeEl.textContent = getCloneTreePlaceholder();
+  window.cloneSelectedFolders = [];
+  window.cloneFoldersOnly = [];
+  window.cloneExcluded = [];
+  window.cloneUtils?.updateCountsUI?.();
 
   if (ingestElements.logOutput) {
     ingestElements.logOutput.textContent = '';
     const span = document.createElement('span');
     span.style.color = '#6b7280';
-    span.textContent = '🔄 Fields reset.';
+    span.textContent = translate('ingestFieldsReset', '🔄 Fields reset.');
     ingestElements.logOutput.appendChild(span);
     ingestElements.logOutput.scrollTop = ingestElements.logOutput.scrollHeight;
   }
-  logIngest('🔄 Fields reset.');
+  logIngest(translate('ingestFieldsReset', '🔄 Fields reset.'));
   resetIngestProgressUI();
   const watchEnabled = ingestElements.watchModeToggle?.checked;
   ingestElements.cancelBtn.disabled = !watchEnabled;
@@ -398,6 +583,122 @@ function resetIngestFields() {
     box.value = '';
     box.style.height = 'auto';
   }
+}
+
+function isPrivateAddress(hostname) {
+  const host = (hostname || '').toLowerCase();
+  if (!host) return true;
+  if (['localhost', '127.0.0.1', '::1'].includes(host)) return true;
+  if (host.endsWith('.local')) return true;
+
+  const octets = host.split('.');
+  if (octets.length === 4 && octets.every(p => /^\d+$/.test(p))) {
+    const [a, b] = octets.map(Number);
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+  }
+
+  const normalizedV6 = host.split('%')[0];
+  if (normalizedV6.includes(':')) {
+    if (normalizedV6 === '::1') return true;
+    if (normalizedV6.startsWith('fc') || normalizedV6.startsWith('fd')) return true;
+    if (normalizedV6.startsWith('fe80')) return true;
+  }
+
+  return false;
+}
+
+function validateN8nUrl(n8nUrl) {
+  const trimmed = (n8nUrl || '').trim();
+  if (!trimmed) {
+    return { valid: false, message: '❌ Please provide an n8n URL when webhook logging is enabled.' };
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return { valid: false, message: '❌ Invalid n8n URL. Please use a full http/https address.' };
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return { valid: false, message: '❌ n8n URL must start with http:// or https://.' };
+  }
+
+  if (isPrivateAddress(parsed.hostname)) {
+    return { valid: false, message: '❌ n8n URL cannot target localhost or private networks.' };
+  }
+
+  return { valid: true, url: trimmed };
+}
+
+function normalizePathInput(p) {
+  return (p || '').trim();
+}
+
+function isPathInside(base, candidate) {
+  if (!base || !candidate) return false;
+  const rel = window.electron.relative?.(base, candidate);
+  if (typeof rel !== 'string') return false;
+  if (rel === '' || rel === '.') return true;
+  if (rel.startsWith('..')) return false;
+  if (rel.startsWith('/') || /^[A-Za-z]:/.test(rel)) return false;
+  return true;
+}
+
+function collectSourceRoots(cfg) {
+  const roots = new Set();
+  const primary = normalizePathInput(cfg.source);
+  if (primary) roots.add(primary);
+
+  if (Array.isArray(cfg.sourceFiles)) {
+    for (const item of cfg.sourceFiles) {
+      const dir = window.electron.dirname?.(item);
+      if (dir) roots.add(dir);
+    }
+  }
+
+  return Array.from(roots);
+}
+
+function validateIngestConfig(cfg) {
+  const errors = [];
+  const hasSourcePath = !!(cfg.source && cfg.source.trim());
+  const hasSourceFiles = Array.isArray(cfg.sourceFiles) && cfg.sourceFiles.length > 0;
+
+  const sourceRoots = collectSourceRoots(cfg);
+  const destPath = normalizePathInput(cfg.destination);
+  const backupPath = normalizePathInput(cfg.backupPath);
+
+  if (!hasSourcePath && !hasSourceFiles) {
+    errors.push('❌ Please select a source folder or add files before starting.');
+  }
+
+  if (!cfg.destination || !cfg.destination.trim()) {
+    errors.push('❌ Please set a destination before starting.');
+  } else if (destPath && sourceRoots.some(root => isPathInside(root, destPath))) {
+    errors.push('❌ Destination cannot be the same as the source or located inside the source folder.');
+  } else if (destPath && sourceRoots.some(root => isPathInside(destPath, root))) {
+    errors.push('❌ Source cannot be the same as or located inside the destination folder.');
+  }
+
+  if (cfg.dualCopy && !(cfg.backupPath && cfg.backupPath.trim())) {
+    errors.push('❌ Backup path is required when dual copy is enabled.');
+  } else if (cfg.dualCopy && backupPath && sourceRoots.some(root => isPathInside(root, backupPath))) {
+    errors.push('❌ Backup path cannot be the same as the source or located inside the source folder.');
+  } else if (cfg.dualCopy && backupPath && sourceRoots.some(root => isPathInside(backupPath, root))) {
+    errors.push('❌ Source cannot be the same as or located inside the backup folder.');
+  }
+
+  if (cfg.enableN8N) {
+    const { valid, message } = validateN8nUrl(cfg.n8nUrl);
+    if (!valid) errors.push(message);
+  }
+
+  return errors;
 }
 
 // ===============================
@@ -418,15 +719,9 @@ ingestElements.sourceBtn?.addEventListener('click', async () => {
   if (paths.length === 1 && isDir) {
     ingestElements.sourcePath.value = paths[0];
     ingestElements.sourcePath.dataset.fileList = '[]';
+    logIngest(`📁 Source set to folder: ${paths[0]}`, { fileId: paths[0] });
     if (ingestElements.enableClone?.checked) {
-      const src = paths[0];
-      const result = await ipc.invoke('get-folder-tree', src);
-      if (result.success) {
-        const container = document.getElementById('clone-folder-tree');
-        container.innerHTML = '';
-        window.cloneUtils.renderFolderTree(result.tree, container);
-        window.cloneUtils.updateCountsUI?.();
-      }
+      refreshCloneTreeFromSource(paths[0]);
     }
   } else {
     const files = paths.filter(p => {
@@ -438,6 +733,22 @@ ingestElements.sourceBtn?.addEventListener('click', async () => {
     });
     ingestElements.sourcePath.dataset.fileList = JSON.stringify(files);
     ingestElements.sourcePath.value = files.length === 1 ? files[0] : `${files.length} items selected`;
+    if (files.length) {
+      const label = files.length === 1 ? files[0] : `${files.length} files selected`;
+      const opts = {};
+      if (files.length > 1) {
+        opts.detail = files.join('\n');
+      }
+      logIngest(`📁 Source set to ${label}`, opts);
+    }
+  }
+  updateIngestJobPreview();
+});
+
+ingestElements.sourcePath?.addEventListener('change', () => {
+  ingestElements.sourcePath.dataset.fileList = ingestElements.sourcePath.dataset.fileList || '[]';
+  if (ingestElements.enableClone?.checked) {
+    refreshCloneTreeFromSource();
   }
   updateIngestJobPreview();
 });
@@ -446,6 +757,7 @@ ingestElements.destBtn?.addEventListener('click', async () => {
   const folder = await window.electron.selectFolder?.();
   if (folder) {
     ingestElements.destPath.value = folder;
+    logIngest(`📁 Destination set to: ${folder}`, { fileId: folder });
     updateIngestJobPreview();
   }
 });
@@ -458,6 +770,7 @@ ingestElements.backupBtn?.addEventListener('click', async () => {
       ingestElements.dualCopy.checked = true;
       ingestElements.dualCopy.dispatchEvent(new Event('change', { bubbles: true }));
     }
+    logIngest(`🛡️ Backup path set to: ${folder}`, { fileId: folder });
     updateIngestJobPreview();
   }
 });
@@ -465,9 +778,109 @@ ingestElements.backupBtn?.addEventListener('click', async () => {
 // ===============================
 // ▶️ Start Ingest Task
 // ===============================
-ingestElements.startBtn?.addEventListener('click', () => {
-  // DEMO MODE — Start Ingest is visual-only.
-  return;
+ingestElements.startBtn?.addEventListener('click', async () => {
+  const isWatch = document.getElementById('enable-watch-mode')?.checked;
+
+  const cfg = gatherIngestConfig();
+  const validationErrors = validateIngestConfig(cfg);
+  if (validationErrors.length) {
+    const msg = validationErrors.join('\n');
+    showValidationError(msg);
+    return;
+  }
+  if (cfg.cloneMode && (!Array.isArray(cfg.selectedFolders) || cfg.selectedFolders.length === 0)) {
+    const warn = '⚠️ Select at least one folder to clone.';
+    logIngest(warn, { isError: true });
+    if (ingestElements.logOutput) ingestElements.logOutput.textContent = warn;
+    return;
+  }
+
+  const panelLabel = cfg.cloneMode ? 'Clone' : 'Ingest';
+  const summaryParts = [];
+  if (cfg.source) summaryParts.push(`src: ${cfg.source}`);
+  if (Array.isArray(cfg.sourceFiles) && cfg.sourceFiles.length) {
+    summaryParts.push(`files: ${cfg.sourceFiles.length}`);
+  }
+  if (cfg.destination) summaryParts.push(`dest: ${cfg.destination}`);
+  if (cfg.dualCopy && cfg.backupPath) summaryParts.push(`backup: ${cfg.backupPath}`);
+  const summaryLine = summaryParts.length ? summaryParts.join(' | ') : 'no source/destination set';
+
+  logIngest(`🧾 ${panelLabel} job prepared → ${summaryLine}`, {
+    detail: JSON.stringify(
+      {
+        cloneMode: cfg.cloneMode,
+        watchMode: isWatch,
+        verification: cfg.verification?.method || 'none',
+        dualCopy: cfg.dualCopy || false
+      },
+      null,
+      2
+    )
+  });
+  let total = 0;
+  let map = {};
+  try {
+    if (cfg.cloneMode) {
+      const stats = await window.cloneUtils.calculateCloneBytes(cfg);
+      total = stats.total;
+    } else {
+      ({ total, map } = await calculateIngestBytes(cfg));
+    }
+  } catch (err) {
+    const errMsg = `❌ Failed to estimate ${panelLabel.toLowerCase()} size: ${err?.message || err}`;
+    logIngest(errMsg, { isError: true });
+    if (ingestElements.logOutput) {
+      ingestElements.logOutput.textContent = errMsg;
+    }
+    setIngestControlsDisabled(false);
+    ingestElements.startBtn.disabled = false;
+    ingestElements.cancelBtn.disabled = true;
+    return;
+  }
+  const panel = cfg.cloneMode ? 'clone' : 'ingest';
+  const job = {
+    config: cfg,
+    expectedCopyBytes: total,
+    expectedBackupBytes: cfg.dualCopy ? total : 0,
+    fileSizeMap: cfg.cloneMode ? {} : map
+  };
+
+  if (isWatch) {
+    const result = await watchUtils.startWatch(panel, cfg);
+    sendIngestLog?.(result);
+    setIngestControlsDisabled(true);
+    ingestElements.cancelBtn.disabled = false;
+    return;
+  }
+
+  const queueMsg = `🚀 Queuing ${panelLabel.toLowerCase()} job...`;
+  logIngest(queueMsg);
+  if (ingestElements.logOutput) {
+    ingestElements.logOutput.textContent = queueMsg;
+  }
+  setIngestControlsDisabled(true);
+  try {
+    currentJobId = await ipc.invoke('queue-add-ingest', job);
+    // 🔧 Start processing immediately (no UI lag)
+    await ipc.invoke('queue-start');
+    const queuedMsg = `🗳️ ${panelLabel} job queued.`;
+    logIngest(queuedMsg);
+    if (ingestElements.logOutput) {
+      ingestElements.logOutput.textContent = queuedMsg;
+    }
+  } catch (err) {
+    const errMsg = `❌ Queue error: ${err.message}`;
+    logIngest(errMsg, { isError: true });
+    if (ingestElements.logOutput) {
+      ingestElements.logOutput.textContent = errMsg;
+    }
+    setIngestControlsDisabled(false);
+    ingestElements.startBtn.disabled = false;
+    ingestElements.cancelBtn.disabled = true;
+    return;
+  }
+
+  ingestElements.cancelBtn.disabled = false;
 });
 
 
@@ -498,9 +911,42 @@ if (ipc?.on) {
   });
 }
 
-ingestElements.cancelBtn?.addEventListener('click', () => {
-  // DEMO MODE — Cancel Ingest is visual-only.
-  return;
+ingestElements.cancelBtn?.addEventListener('click', async () => {
+  if (ingestElements.cancelBtn.textContent.includes('Stop Watching')) {
+    const panel = ingestElements.enableClone?.checked ? 'clone' : 'ingest';
+    await watchUtils.stopWatch(panel);
+    const result = await window.electron.cancelIngest?.();
+    sendIngestLog(`🛑 Watch Mode stopped and ${panel} cancelled.`);
+    if (result) sendIngestLog(result);
+
+    setIngestControlsDisabled(false);
+    ingestElements.startBtn.disabled = false;
+    ingestElements.cancelBtn.disabled = true;
+    ingestElements.startBtn.textContent = 'Start';
+    ingestElements.cancelBtn.textContent = 'Cancel';
+    ingestElements.watchModeToggle.checked = false;
+    ingestElements.watchModeToggle.dispatchEvent(new Event('change'));
+    return;
+  }
+
+  const confirmCancel = window.confirm("⚠️ Are you sure you want to cancel the ingest?");
+  if (!confirmCancel) return;
+
+  logIngest('🛑 Cancel requested...');
+  if (ingestElements.logOutput) {
+    ingestElements.logOutput.textContent += '\n🛑 Cancel requested...';
+  }
+  try {
+    await ipc.invoke('queue-cancel-job', currentJobId);
+    currentJobId = null;
+    resetIngestFields();
+  } catch (err) {
+    const errMsg = `❌ Cancel error: ${err.message}`;
+    logIngest(errMsg, { isError: true });
+    if (ingestElements.logOutput) {
+      ingestElements.logOutput.textContent += `\n❌ Cancel error: ${err.message}`;
+    }
+  }
 });
 
 
@@ -636,9 +1082,82 @@ function initIngestPanel(resetDefaults = false) {
     }
   });
 
+  // Clone Mode tooltip – matches Ingest panel tooltip behavior
+  const cloneModeTooltip = document.querySelector('#ingest #clone-mode-tooltip');
+  if (cloneModeTooltip && !cloneModeTooltip.dataset.bound) {
+    cloneModeTooltip.innerHTML = `
+      <div class="tooltip-content">
+        <div class="tooltip-header">CLONE MODE OVERVIEW</div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">What Clone Mode does</span>
+          <ul class="tooltip-list">
+            <li>Treats the source as a folder tree instead of a flat file list.</li>
+            <li>Only copies the folders you select in the Clone tree.</li>
+            <li>Preserves original folder structure at the destination.</li>
+            <li>Still respects your include/exclude extension filters and verification settings.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Controls in this row</span>
+          <ul class="tooltip-list">
+            <li><strong>Filter</strong> - type text to narrow the folder tree by name.</li>
+            <li><strong>Select All</strong> - select/deselect every folder in the tree.</li>
+            <li><strong>Show File Count</strong> - show per-folder file counts (slower on huge trees).</li>
+          </ul>
+        </div>
+      </div>
+    `;
+    cloneModeTooltip.dataset.bound = 'true';
+  }
+
+  // Top-right Ingest overview tooltip (technical overview)
+  const ingestOverviewTooltip = document.querySelector('#ingest #ingest-overview-tooltip');
+  if (ingestOverviewTooltip && !ingestOverviewTooltip.dataset.bound) {
+    ingestOverviewTooltip.innerHTML = `
+      <div class="tooltip-content">
+        <div class="tooltip-header">INGEST PANEL — Technical Overview</div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Core capabilities</span>
+          <ul class="tooltip-list">
+            <li>Creates verified copies of camera cards or source folders to one or two destinations.</li>
+            <li>Supports classic ingest and Clone Mode (tree-based, folder-selective copy).</li>
+            <li>Applies include / exclude filters, duplicate skipping, and optional watch-folder ingest.</li>
+            <li>Controls checksum / verification strategy, threading, retries, and log output.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Inputs / outputs</span>
+          <ul class="tooltip-list">
+            <li>Inputs: source folder or file list, primary destination, optional backup path.</li>
+            <li>Outputs: one or two fully copied trees plus optional job logs and webhook payloads.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Under the hood</span>
+          <ul class="tooltip-list">
+            <li>File moves are performed by the Assist backend with optional threaded copy and retries.</li>
+            <li>Verification can run as byte-compare or hash-based (BLAKE3, SHA-256, MD5, xxHash64).</li>
+            <li>Clone Mode uses a pre-computed folder tree and selection map to limit what is copied.</li>
+          </ul>
+        </div>
+      </div>
+    `;
+    ingestOverviewTooltip.dataset.bound = 'true';
+  }
+
   refreshPresetDropdown();
   // ⛔ Do not auto-populate the job preview on first load
   bindIngestPreviewAutoUpdate();
+
+  const cloneTree = document.getElementById('clone-folder-tree');
+  if (cloneTree && !cloneTree.textContent?.trim()) {
+    cloneTree.textContent = getCloneTreePlaceholder();
+  }
 }
 
 if (document.readyState !== 'loading') {
@@ -656,6 +1175,7 @@ if (document.readyState !== 'loading') {
 function gatherIngestConfig() {
   const selectedMethod = ingestElements.checksumMethod?.value || 'none';
   const skipDuplicates = ingestElements.skipDuplicates?.checked;
+  const n8nUrl = (ingestElements.n8nUrl?.value || '').trim();
 
   const enableThreads = ingestElements.enableThreads?.checked;
   const autoThreads = ingestElements.autoThreads?.checked;
@@ -684,7 +1204,7 @@ function gatherIngestConfig() {
     verbose: false,
     notes: ingestElements.notes.value,
     enableN8N: ingestElements.enableN8N.checked,
-    n8nUrl: ingestElements.n8nUrl.value,
+    n8nUrl,
     n8nLog: ingestElements.n8nLog.checked,
     watchFolder: ingestElements.sourcePath.value,
     verification: {
@@ -791,13 +1311,24 @@ function applyIngestPreset(data) {
       }
     }
   }
+  if (ingestElements.enableClone?.checked && ingestElements.sourcePath?.value) {
+    refreshCloneTreeFromSource();
+  }
   updateIngestJobPreview();
 }
 
 function isWatchConfigValid(cfg) {
   if (!cfg) return 'No ingest config found.';
+
+  if (cfg.useDoneFlag) {
+    const watchMissing = [];
+    if (!cfg.source?.trim()) watchMissing.push('Source Path');
+    if (!cfg.destination?.trim()) watchMissing.push('Destination Path');
+    if (watchMissing.length) return `Watch mode requires: ${watchMissing.join(', ')}`;
+  }
+
   const missing = [];
-  if (cfg.dualCopy && !cfg.backupPath) missing.push('Backup Path');
+  if (cfg.dualCopy && !(cfg.backupPath && cfg.backupPath.trim())) missing.push('Backup Path');
   if (!cfg.verification?.method) missing.push('Checksum Method');
   if (!cfg.filters) missing.push('Filters');
   if (cfg.enableThreads && !cfg.autoThreads && !cfg.maxThreads) missing.push('Thread Count');
@@ -819,7 +1350,9 @@ function refreshPresetDropdown() {
       .filter(f => f.endsWith('.json'))
       .map(f => ({ value: f, label: f.replace(/\.json$/, '') }));
   } catch (err) {
-    console.error('Failed to read presets:', err);
+    const msg = `❌ Failed to read ingest presets: ${err?.message || err}`;
+    logIngest(msg, { isError: true });
+    panelLog('error', 'Failed to read presets', { error: err?.message || err });
   }
   setupStyledDropdown('ingest-preset', opts);
   setDropdownValue('ingest-preset', hidden.value || '');
@@ -843,8 +1376,13 @@ ingestElements.presetSelect?.addEventListener('change', () => {
     const raw = window.electron.readTextFile(window.electron.joinPath(presetDir, file));
     const data = JSON.parse(raw);
     applyIngestPreset(data);
+    logIngest(`📚 Applied ingest preset "${file}".`, {
+      fileId: window.electron.joinPath(presetDir, file)
+    });
   } catch (err) {
-    console.error('Failed to load preset', err);
+    const msg = `❌ Failed to load ingest preset "${file}": ${err?.message || err}`;
+    logIngest(msg, { isError: true });
+    panelLog('error', 'Failed to load preset', { error: err?.message || err });
   }
 });
 
@@ -866,6 +1404,9 @@ ingestElements.saveConfigBtn?.addEventListener('click', async () => {
     ipc.writeTextFile(file, JSON.stringify(cfg, null, 2));
     ipc.send('preset-saved', 'ingest');
     refreshPresetDropdown();
+    logIngest(`💾 Ingest config saved to "${file}".`, {
+      fileId: file
+    });
     alert('Config saved.');
   }
 });
@@ -876,7 +1417,12 @@ ingestElements.loadConfigBtn?.addEventListener('click', async () => {
   try {
     const data = JSON.parse(ipc.readTextFile(file));
     applyIngestPreset(data);
+    logIngest(`📥 Loaded ingest config from "${file}".`, {
+      fileId: file
+    });
   } catch (err) {
+    const msg = `❌ Failed to load ingest config from "${file}": ${err.message}`;
+    logIngest(msg, { isError: true });
     alert('Failed to load config: ' + err.message);
   }
 });
@@ -904,6 +1450,86 @@ if (typeof ipc !== 'undefined' && ipc.on) {
       }
     });
 
+  ipc.on('queue-job-start', (_e, job) => {
+    if (job.panel !== 'ingest') return;
+    const bar = document.getElementById('ingest-progress');
+    const out = document.getElementById('ingest-progress-output');
+    if (bar) { bar.value = 0; bar.style.display = 'block'; }
+    if (out) out.value = '';
+    ensureEtaInline();
+    showIngestHamster();
+  });
+
+  ipc.on('queue-job-progress', (_event, payload) => {
+    if (payload.panel !== 'ingest') return;
+    const bar = document.getElementById('ingest-progress');
+    const out = document.getElementById('ingest-progress-output');
+    if (!bar || !out) return;
+
+    if (typeof payload.percent === 'number') {
+      const isWatchMode = ingestElements.watchModeToggle?.checked;
+      const pct = isWatchMode && typeof payload.filePercent === 'number'
+        ? payload.filePercent
+        : payload.percent;
+
+      bar.style.display = pct >= 100 ? 'none' : 'block';
+      bar.value = Math.max(0, Math.min(100, pct));
+      out.value = pct >= 100 ? '' : Math.round(pct);
+
+      const etaEl = ensureEtaInline();
+      if (etaEl) {
+        const showEta = !isWatchMode && pct < 100 && payload.eta;
+        etaEl.textContent = showEta ? ` • ETA ${payload.eta}` : '';
+      }
+
+    }
+
+    showIngestHamster();
+
+    if (payload.file && payload.status?.copied) {
+      logIngest(`✅ Copied ${payload.file}`);
+    }
+  });
+  ipc.on('queue-job-complete', (_e, job) => {
+    if (job.panel !== 'ingest') return;
+    currentJobId = null;
+    const bar = document.getElementById('ingest-progress');
+    const out = document.getElementById('ingest-progress-output');
+    if (bar) { bar.value = 100; bar.style.display = 'none'; }
+    if (out) out.value = '';
+    const eta = document.getElementById('ingest-eta-inline');
+    if (eta) eta.textContent = '';
+    hideIngestHamster();
+    const isWatchMode = ingestElements.watchModeToggle?.checked;
+    if (!isWatchMode) {
+      setIngestControlsDisabled(false);
+    } else {
+      ingestElements.cancelBtn.disabled = false;
+    }
+  });
+  ipc.on('queue-job-failed', (_e, job) => {
+    if (job.panel !== 'ingest') return;
+    currentJobId = null;
+    resetIngestProgressUI();
+    const isWatchMode = ingestElements.watchModeToggle?.checked;
+    if (!isWatchMode) {
+      setIngestControlsDisabled(false);
+    } else {
+      ingestElements.cancelBtn.disabled = false;
+    }
+  });
+  ipc.on('queue-job-cancelled', (_e, job) => {
+    if (job.panel !== 'ingest') return;
+    currentJobId = null;
+    resetIngestProgressUI();
+    const isWatchMode = ingestElements.watchModeToggle?.checked;
+    if (!isWatchMode) {
+      setIngestControlsDisabled(false);
+    } else {
+      ingestElements.cancelBtn.disabled = false;
+    }
+    resetIngestFields();
+  });
 }
 
 if (typeof module !== 'undefined') {

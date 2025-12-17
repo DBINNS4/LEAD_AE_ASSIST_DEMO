@@ -5,16 +5,21 @@
     var ipc = window.ipc ?? window.electron;
   }
 
+  const PANEL_ID = 'preferences';
+
   const preferencesPath = window.electron.resolvePath("config", "state.json");
 
-  const presetDir = window.electron.resolvePath('config', 'presets', 'preferences');
+  const secureStore = window.electron?.secureStore;
+  const secretKeys = { apiKey: 'aiApiKey' };
+
+  let cachedApiKey = '';
 
   const defaultPreferences = {
     systemNotifications: false,
     offlineMode: false,
     theme: "light",
     language: "en",
-    apiKey: "",
+    apiKeyStored: false,
     confidenceThreshold: "90",
     webhookUrl: "",
     webhookLogging: false,
@@ -45,12 +50,46 @@
     }
   }
 
+  function loadSecretValue(key) {
+    try {
+      return secureStore?.loadSecret?.(key) || '';
+    } catch (err) {
+      console.error('❌ Failed to load secret from secure store:', err);
+      return '';
+    }
+  }
+
+  function persistSecretValue(key, value) {
+    try {
+      if (!value) {
+        secureStore?.deleteSecret?.(key);
+        return '';
+      }
+      secureStore?.saveSecret?.(key, value);
+      return value;
+    } catch (err) {
+      console.error('❌ Failed to persist secret:', err);
+      return '';
+    }
+  }
+
+  function migrateLegacyApiKey(prefState) {
+    const legacy = prefState?.preferences?.apiKey;
+    if (legacy && typeof legacy === 'string') {
+      cachedApiKey = persistSecretValue(secretKeys.apiKey, legacy.trim());
+      delete prefState.preferences.apiKey;
+      prefState.preferences.apiKeyStored = !!cachedApiKey;
+      savePreferences(prefState);
+    }
+  }
+
   const el = {
     notifications: document.getElementById("system-notifications"),
     offlineMode: document.getElementById("offline-mode"),
     language: document.getElementById("language-select"),
     apiKeyInput: document.getElementById("ai-api-key"),
     webhookUrl: document.getElementById("webhook-url"),
+    webhookUrlError: document.getElementById("webhook-url-error"),
     webhookLog: document.getElementById("webhook-logging"),
     webhookFailOnly: document.getElementById("webhook-only-fail"),
     resetButton: document.getElementById("reset-preferences"),
@@ -62,6 +101,49 @@
   };
 
   const webhookSections = Array.from(document.querySelectorAll('[data-webhook-section]'));
+
+  function translate(key, fallback) {
+    return window.i18n?.t?.(key) || fallback;
+  }
+
+  function validateWebhookUrl(value) {
+    const url = value?.trim?.() || '';
+    if (!url) {
+      return { url, configured: false, valid: true, message: '' };
+    }
+
+    try {
+      // eslint-disable-next-line no-new
+      new URL(url);
+      return { url, configured: true, valid: true, message: '' };
+    } catch (err) {
+      return {
+        url,
+        configured: true,
+        valid: false,
+        message: translate('webhookUrlInvalid', 'Please enter a valid webhook URL (https://...)')
+      };
+    }
+  }
+
+  function updateWebhookValidationUI() {
+    const validation = validateWebhookUrl(el.webhookUrl?.value);
+    const invalid = validation.configured && !validation.valid;
+    const disabled = !validation.configured || invalid;
+    [el.webhookLog, el.webhookFailOnly].forEach(ctrl => {
+      if (!ctrl) return;
+      ctrl.disabled = disabled;
+      if (disabled) ctrl.checked = false;
+    });
+
+    if (el.webhookUrlError) {
+      el.webhookUrlError.textContent = invalid ? validation.message : '';
+      el.webhookUrlError.hidden = !invalid;
+    }
+
+    document.body?.classList.toggle('webhook-invalid', invalid);
+    return validation;
+  }
 
   function setDropdownValue(hiddenId, value) {
     const hidden = document.getElementById(hiddenId);
@@ -94,7 +176,7 @@
   const toastEl = document.getElementById("prefs-toast");
 
   function updateWebhookVisibility() {
-    const visible = !!el.webhookLog?.checked;
+    const visible = !!(el.webhookLog?.checked || el.webhookFailOnly?.checked);
     webhookSections.forEach(section => {
       if (!section) return;
       if (visible) {
@@ -109,9 +191,10 @@
   }
 
   function mirrorWebhookSettings() {
-    const url = el.webhookUrl?.value.trim() || '';
-    const logging = !!el.webhookLog?.checked;
-    const onlyFail = !!el.webhookFailOnly?.checked;
+    const validation = updateWebhookValidationUI();
+    const url = validation.valid && validation.configured ? validation.url : '';
+    const logging = !!el.webhookLog?.checked && !!url;
+    const onlyFail = !!el.webhookFailOnly?.checked && !!url;
     const enabled = url && (logging || onlyFail);
     const mappings = [
       { enable: 'adobe-enable-n8n', url: 'adobe-n8n-url', log: 'adobe-n8n-log' },
@@ -143,6 +226,8 @@
   }
   
   const prefs = loadPreferences();
+  migrateLegacyApiKey(prefs);
+  cachedApiKey = loadSecretValue(secretKeys.apiKey);
 
   try {
     const pkgPath = window.electron.joinPath(
@@ -159,6 +244,7 @@
   }
 
   function populateFields(p = defaultPreferences) {
+    cachedApiKey = loadSecretValue(secretKeys.apiKey);
     if (el.notifications) el.notifications.checked = p.systemNotifications || false;
     if (el.offlineMode) el.offlineMode.checked = !!p.offlineMode;
     setDropdownValue('language-select', p.language || 'en');
@@ -172,25 +258,35 @@
       applyTheme(theme);
     }
 
-    if (el.apiKeyInput) el.apiKeyInput.value = p.apiKey || '';
+    if (el.apiKeyInput) el.apiKeyInput.value = cachedApiKey || '';
 
     if (el.webhookUrl) el.webhookUrl.value = p.webhookUrl || '';
     if (el.webhookLog) el.webhookLog.checked = p.webhookLogging || false;
     if (el.webhookFailOnly) el.webhookFailOnly.checked = p.webhookOnlyFail || false;
 
+    updateWebhookValidationUI();
     mirrorWebhookSettings();
   }
 
   if (prefs.preferences) {
+    prefs.preferences.apiKeyStored = prefs.preferences.apiKeyStored || !!cachedApiKey;
     populateFields(prefs.preferences);
   } else {
-    prefs.preferences = { ...defaultPreferences };
-    populateFields(defaultPreferences);
+    prefs.preferences = { ...defaultPreferences, apiKeyStored: !!cachedApiKey };
+    populateFields(prefs.preferences);
   }
 
   function attachSaveEvents() {
     const save = () => {
+      const webhookValidation = updateWebhookValidationUI();
       mirrorWebhookSettings();
+      if (!webhookValidation.valid && webhookValidation.url) {
+        showToast(translate('webhookUrlInvalidToast', 'Enter a valid webhook URL before saving.'));
+        return;
+      }
+      const apiKeyValue = el.apiKeyInput?.value?.trim?.() || '';
+      cachedApiKey = persistSecretValue(secretKeys.apiKey, apiKeyValue);
+
       const updated = {
         ...prefs,
         preferences: {
@@ -199,15 +295,16 @@
           theme: el.themeSelect?.value || "light",
           language: el.language?.value || 'en',
 
-          apiKey: el.apiKeyInput?.value || '',
+          apiKeyStored: !!cachedApiKey,
           confidenceThreshold: prefs.preferences?.confidenceThreshold || '90',
-          
-          webhookUrl: el.webhookUrl?.value || '',
-          webhookLogging: !!el.webhookLog?.checked,
-          webhookOnlyFail: !!el.webhookFailOnly?.checked
+
+          webhookUrl: webhookValidation.valid ? webhookValidation.url : '',
+          webhookLogging: webhookValidation.valid && !!el.webhookLog?.checked,
+          webhookOnlyFail: webhookValidation.valid && !!el.webhookFailOnly?.checked
         }
       };
 
+      prefs.preferences = updated.preferences;
       savePreferences(updated);
       showToast(window.i18n.t('preferencesSaved'));
       applyTheme(updated.preferences.theme);
@@ -221,6 +318,11 @@
   }
 
   attachSaveEvents();
+
+  el.webhookUrl?.addEventListener('input', () => {
+    updateWebhookValidationUI();
+    updateWebhookVisibility();
+  });
 
   el.language?.removeAttribute?.('disabled');
   el.language?.addEventListener('change', async () => {
@@ -237,40 +339,47 @@
   // 💾 Preset Handling
   // ===============================
   function gatherPreferencesConfig() {
+    const hasApiKey = (cachedApiKey || loadSecretValue(secretKeys.apiKey))?.trim?.().length > 0;
+    const webhookValidation = updateWebhookValidationUI();
     return {
       systemNotifications: !!el.notifications?.checked,
       offlineMode: !!el.offlineMode?.checked,
       theme: el.themeSelect?.value || 'light',
       language: el.language?.value || 'en',
-      apiKey: el.apiKeyInput?.value || '',
+      apiKeyStored: hasApiKey,
       confidenceThreshold: prefs.preferences?.confidenceThreshold || '90',
-      webhookUrl: el.webhookUrl?.value || '',
-      webhookLogging: !!el.webhookLog?.checked,
-      webhookOnlyFail: !!el.webhookFailOnly?.checked
+      webhookUrl: webhookValidation.valid ? webhookValidation.url : '',
+      webhookLogging: webhookValidation.valid && !!el.webhookLog?.checked,
+      webhookOnlyFail: webhookValidation.valid && !!el.webhookFailOnly?.checked
     };
   }
 
   function applyPreferencesPreset(data) {
-    populateFields(data);
-    prefs.preferences = { ...prefs.preferences, ...data };
+    const sanitized = { ...data };
+    if ('apiKey' in sanitized) delete sanitized.apiKey;
+    if (typeof sanitized.apiKeyStored !== 'boolean') {
+      sanitized.apiKeyStored = prefs.preferences.apiKeyStored || !!cachedApiKey;
+    }
+
+    prefs.preferences = { ...prefs.preferences, ...sanitized };
+    populateFields(prefs.preferences);
     savePreferences(prefs);
 
     mirrorWebhookSettings();
 
-    const theme = data.theme || 'light';
+    const theme = prefs.preferences.theme || 'light';
     localStorage.setItem('theme', theme);
     applyTheme(theme);
   }
 
-  function refreshPresetDropdown() {
+  async function refreshPresetDropdown() {
     const sel = el.presetSelect;
-    if (!sel) return;
+    if (!sel || !ipc?.invoke) return;
     try {
-      window.electron.mkdir(presetDir);
-      const files = window.electron.readdir(presetDir) || [];
-      const opts = files
-        .filter(f => f.endsWith('.json'))
-        .map(f => ({ value: f, label: f.replace(/\.json$/, '') }));
+      const presets = await ipc.invoke('list-panel-presets', PANEL_ID);
+      const opts = (Array.isArray(presets) ? presets : [])
+        .filter(p => typeof p?.file === 'string' && p.file.toLowerCase().endsWith('.json'))
+        .map(p => ({ value: p.file, label: p.name || p.file.replace(/\.json$/i, '') }));
       setupStyledDropdown('prefs-preset', opts);
       setDropdownValue('prefs-preset', sel.value || '');
     } catch (err) {
@@ -291,35 +400,61 @@
 
   refreshPresetDropdown();
 
-  el.presetSelect?.addEventListener('change', () => {
+  el.presetSelect?.addEventListener('change', async () => {
     const file = el.presetSelect?.value;
     if (!file) return;
     try {
-      const raw = window.electron.readTextFile(
-        window.electron.joinPath(presetDir, file)
-      );
-      const data = JSON.parse(raw);
-      applyPreferencesPreset(data);
+      const raw = await ipc.invoke('read-panel-preset', { panel: PANEL_ID, presetName: file });
+      if (!raw) throw new Error('Preset not found');
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      await applyPreferencesPreset(data);
     } catch (err) {
       console.error('Failed to load preset', err);
+      alert('Failed to load preset: ' + (err?.message || err));
     }
   });
 
   el.saveConfigBtn?.addEventListener('click', async () => {
     const cfg = gatherPreferencesConfig();
-    const file = await ipc.saveFile({
-      title: 'Save Preset',
-      defaultPath: window.electron.joinPath(presetDir, 'preferences.json')
-    });
-    if (file) {
-      ipc.writeTextFile(file, JSON.stringify(cfg, null, 2));
-      ipc.send('preset-saved', 'preferences');
-      refreshPresetDropdown();
+    const suggestedName = (el.presetSelect?.value || 'preferences').replace(/\.json$/i, '') || 'preferences';
+    const presetName = window.prompt('Save preset as', suggestedName);
+    if (!presetName) return;
+
+    try {
+      const savedPath = await ipc.invoke('write-panel-preset', {
+        panel: PANEL_ID,
+        presetName,
+        contents: cfg
+      });
+
+      if (!savedPath) throw new Error('Unable to save preset');
+
+      const savedFile = window.electron.basename?.(savedPath) || `${presetName}.json`;
+      ipc.send('preset-saved', PANEL_ID);
+      await refreshPresetDropdown();
+      setDropdownValue('prefs-preset', savedFile);
       showToast(window.i18n.t('preferencesSaved'));
+    } catch (err) {
+      alert('Failed to save preset: ' + (err?.message || err));
     }
   });
 
   el.loadConfigBtn?.addEventListener('click', async () => {
+    const selected = el.presetSelect?.value;
+
+    // Prefer loading from the managed preset folder so packaged builds work reliably
+    if (selected) {
+      try {
+        const raw = await ipc.invoke('read-panel-preset', { panel: PANEL_ID, presetName: selected });
+        if (!raw) throw new Error('Preset not found');
+        const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        applyPreferencesPreset(data);
+        return;
+      } catch (err) {
+        console.error('Failed to load preset via managed folder:', err);
+      }
+    }
+
     const file = await ipc.openFile({ title: 'Load Preset' });
     if (!file) return;
     try {
@@ -332,6 +467,8 @@
 
 
   el.resetButton?.addEventListener("click", () => {
+    cachedApiKey = persistSecretValue(secretKeys.apiKey, '');
+    if (el.apiKeyInput) el.apiKeyInput.value = '';
     prefs.preferences = { ...defaultPreferences };
     populateFields(prefs.preferences);
     mirrorWebhookSettings();
@@ -388,28 +525,43 @@
     });
   })();
 
+  if (typeof window !== 'undefined' && typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test') {
+    window.__prefsTestHooks = {
+      updateWebhookVisibility,
+      webhookSections,
+      controls: el
+    };
+  }
+
   // ─── Preferences: panel overview tooltip ──────────────────────────────────
   const prefsOverview = document.querySelector('#preferences #preferences-overview-tooltip');
   if (prefsOverview && !prefsOverview.dataset.bound) {
     prefsOverview.innerHTML = `
       <div class="tooltip-content">
-        <div class="tooltip-header">PREFERENCES PANEL OVERVIEW</div>
+        <div class="tooltip-header">PREFERENCES — Technical Overview</div>
 
         <div class="tooltip-section">
-          <span class="tooltip-subtitle">What this panel is for</span>
+          <span class="tooltip-subtitle">Core capabilities</span>
           <ul class="tooltip-list">
-            <li>Control global behaviour of the Lead AE Assist app.</li>
-            <li>Configure notifications, offline mode, theme, and language.</li>
-            <li>Set up automation hooks (webhooks, logging options, API keys).</li>
+            <li>Controls global behaviour of the app: notifications, offline mode, theme, and language.</li>
+            <li>Stores the AI API key in the secure store instead of plain config.</li>
+            <li>Defines global webhook URL and logging policy for automation hooks.</li>
           </ul>
         </div>
 
         <div class="tooltip-section">
-          <span class="tooltip-subtitle">Quick workflow</span>
+          <span class="tooltip-subtitle">Under the hood</span>
           <ul class="tooltip-list">
-            <li><strong>Load or pick a preset</strong> - so different shows/machines can share settings.</li>
-            <li><strong>Adjust general options</strong> - notifications, offline mode, and appearance.</li>
-            <li><strong>Configure automation</strong> - webhook URL, when to fire it, and what to log.</li>
+            <li>Persists settings in <code>config/state.json</code> plus the OS-level secure store for secrets.</li>
+            <li>Broadcasts theme changes to the top-bar toggle and other panels.</li>
+            <li>Mirrors webhook settings into Ingest, Transcode, and Adobe Automate panels.</li>
+          </ul>
+        </div>
+
+        <div class="tooltip-section">
+          <span class="tooltip-subtitle">Operational notes</span>
+          <ul class="tooltip-list">
+            <li>Resetting preferences clears local API keys and webhook settings; presets can be used to restore known configs.</li>
           </ul>
         </div>
       </div>
